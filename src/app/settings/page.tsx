@@ -1,7 +1,9 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useTheme } from '@/components/ThemeProvider';
-import { Sun, Moon, Monitor, Palette } from 'lucide-react';
+import { Sun, Moon, Monitor, Palette, Bell, BellOff } from 'lucide-react';
+import { requestNotificationPermission, getNotificationPermission } from '@/lib/notifications';
 import type { AccentColor, ThemeMode } from '@/types';
 import styles from './page.module.css';
 
@@ -22,6 +24,16 @@ const ACCENT_OPTIONS: { value: AccentColor; label: string; color: string }[] = [
 
 export default function SettingsPage() {
   const { theme, accentColor, setTheme, setAccentColor } = useTheme();
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission | null>(null);
+
+  useEffect(() => {
+    setNotifPermission(getNotificationPermission());
+  }, []);
+
+  const handleEnableNotifications = async () => {
+    const granted = await requestNotificationPermission();
+    setNotifPermission(granted ? 'granted' : 'denied');
+  };
 
   return (
     <div className={styles.container}>
@@ -73,6 +85,43 @@ export default function SettingsPage() {
               <span className={styles.accentLabel}>{opt.label}</span>
             </button>
           ))}
+        </div>
+      </section>
+
+      {/* Notifications */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <Bell size={18} className={styles.sectionIcon} />
+          <h2 className={styles.sectionTitle}>Notifications</h2>
+        </div>
+        <p className={styles.sectionDesc}>Get reminded about your tasks</p>
+        <div className={styles.notifCard}>
+          {notifPermission === 'granted' ? (
+            <div className={styles.notifStatus}>
+              <Bell size={18} className={styles.notifIconOn} />
+              <div>
+                <p className={styles.notifStatusText}>Notifications enabled</p>
+                <p className={styles.notifStatusSub}>You&apos;ll get reminders for tasks with times set</p>
+              </div>
+            </div>
+          ) : notifPermission === 'denied' ? (
+            <div className={styles.notifStatus}>
+              <BellOff size={18} className={styles.notifIconOff} />
+              <div>
+                <p className={styles.notifStatusText}>Notifications blocked</p>
+                <p className={styles.notifStatusSub}>Enable them in your browser settings</p>
+              </div>
+            </div>
+          ) : (
+            <button
+              className={styles.notifEnableBtn}
+              onClick={handleEnableNotifications}
+              id="enable-notifications-btn"
+            >
+              <Bell size={18} />
+              Enable Notifications
+            </button>
+          )}
         </div>
       </section>
 

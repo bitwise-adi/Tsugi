@@ -45,6 +45,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setAccentColorState(initialAccent);
     setResolvedTheme(resolveTheme(initialTheme));
     setMounted(true);
+
+    // Register service worker for PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        // SW registration failed — not critical
+      });
+    }
   }, [resolveTheme]);
 
   // Listen for system theme changes

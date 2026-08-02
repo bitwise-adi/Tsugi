@@ -157,6 +157,65 @@
   line-height: var(--leading-relaxed);
 }
 
+/* --- Notifications --- */
+.notifCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+}
+
+.notifStatus {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.notifIconOn {
+  color: var(--color-done);
+  flex-shrink: 0;
+}
+
+.notifIconOff {
+  color: var(--color-missed);
+  flex-shrink: 0;
+}
+
+.notifStatusText {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+}
+
+.notifStatusSub {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.notifEnableBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  background: var(--accent-hsl);
+  color: white;
+  border-radius: var(--radius-lg);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-sm);
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.notifEnableBtn:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.notifEnableBtn:active {
+  transform: scale(0.97);
+}
+
+.section:nth-child(4) { animation-delay: 200ms; }
+
 /* Desktop */
 @media (min-width: 769px) {
   .container {

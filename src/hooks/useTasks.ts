@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { db } from '@/lib/db';
+import { scheduleTaskReminder, cancelTaskReminder } from '@/lib/notifications';
 import type { Task } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
@@ -38,6 +39,12 @@ export function useTasks(dateFilter?: string) {
         return a.createdAt.localeCompare(b.createdAt);
       });
       setTasks(result);
+      // Schedule reminders for tasks with time + reminderEnabled
+      result.forEach(t => {
+        if (t.reminderEnabled && t.time && !t.completed) {
+          scheduleTaskReminder(t.id, t.title, t.date, t.time);
+        }
+      });
     } catch (err) {
       console.error('Failed to load tasks:', err);
     } finally {
@@ -58,6 +65,9 @@ export function useTasks(dateFilter?: string) {
       updatedAt: now,
     };
     await db.tasks.add(newTask);
+    if (newTask.reminderEnabled && newTask.time) {
+      scheduleTaskReminder(newTask.id, newTask.title, newTask.date, newTask.time);
+    }
     setTasks(prev => {
       const updated = [...prev, newTask];
       const priorityOrder = { high: 0, medium: 1, low: 2 };
@@ -113,6 +123,7 @@ export function useTasks(dateFilter?: string) {
   }, []);
 
   const deleteTask = useCallback(async (id: string) => {
+    cancelTaskReminder(id);
     await db.tasks.delete(id);
     setTasks(prev => prev.filter(t => t.id !== id));
   }, []);
