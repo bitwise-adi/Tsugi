@@ -1,0 +1,169 @@
+.container {
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  padding: var(--space-4);
+}
+
+.header {
+  padding: var(--space-6) 0 var(--space-4);
+  animation: fadeInDown var(--transition-base) ease-out;
+}
+
+.title {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  letter-spacing: -0.02em;
+}
+
+/* --- Sections --- */
+.section {
+  margin-bottom: var(--space-8);
+  animation: fadeInUp var(--transition-base) ease-out both;
+}
+
+.section:nth-child(2) { animation-delay: 50ms; }
+.section:nth-child(3) { animation-delay: 100ms; }
+.section:nth-child(4) { animation-delay: 150ms; }
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.sectionIcon {
+  color: var(--accent-hsl);
+}
+
+.sectionTitle {
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+}
+
+.sectionDesc {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-4);
+}
+
+/* --- Theme Grid --- */
+.themeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.themeBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-3);
+  background: var(--bg-card);
+  border: 2px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  transition: all var(--transition-fast);
+}
+
+.themeBtn:hover {
+  border-color: var(--border-default);
+  background: var(--bg-card-hover);
+}
+
+.themeBtn:active {
+  transform: scale(0.96);
+}
+
+.themeBtnActive {
+  border-color: var(--accent-hsl);
+  background: var(--accent-subtle);
+  color: var(--text-primary);
+}
+
+/* --- Accent Grid --- */
+.accentGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.accentBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-card);
+  border: 2px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  transition: all var(--transition-fast);
+}
+
+.accentBtn:hover {
+  border-color: var(--border-default);
+  background: var(--bg-card-hover);
+}
+
+.accentBtn:active {
+  transform: scale(0.96);
+}
+
+.accentBtnActive {
+  border-color: var(--accent-hsl);
+}
+
+.accentSwatch {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.accentLabel {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+}
+
+/* --- About --- */
+.aboutCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+}
+
+.appName {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.appVersion {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  margin-top: var(--space-1);
+}
+
+.aboutText {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin-top: var(--space-3);
+  line-height: var(--leading-relaxed);
+}
+
+/* Desktop */
+@media (min-width: 769px) {
+  .container {
+    padding-top: calc(var(--nav-height) + var(--space-4));
+  }
+
+  .accentGrid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}

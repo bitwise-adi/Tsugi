@@ -1,0 +1,121 @@
+.card {
+  display: flex;
+  width: 100%;
+  text-align: left;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-default);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.card:active {
+  transform: scale(0.985);
+  box-shadow: none;
+}
+
+.colorBar {
+  width: 4px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+}
+
+.cardBody {
+  flex: 1;
+  padding: var(--space-4);
+  min-width: 0;
+}
+
+.topRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.frequency {
+  display: inline-block;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  background: var(--bg-input);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  margin-top: var(--space-1);
+}
+
+.chevron {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* --- 7-Day Preview --- */
+.weekPreview {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.dayDot {
+  width: 1.75rem;
+  height: 0.5rem;
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast);
+}
+
+.dot_empty {
+  background: var(--border-subtle);
+}
+
+.dot_done {
+  background: var(--color-done);
+}
+
+.dot_missed {
+  background: var(--color-missed);
+}
+
+.dot_excused {
+  background: var(--color-excused);
+}
+
+/* --- Stats --- */
+.statsRow {
+  display: flex;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.streakIcon {
+  color: var(--color-excused);
+}

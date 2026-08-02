@@ -1,0 +1,479 @@
+/* ============================================================
+   TrackMe — Global Design System
+   ============================================================
+   CSS Custom Properties for theming, typography, spacing,
+   animations, and color palettes.
+   ============================================================ */
+
+/* --- Google Fonts --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ============================================================
+   ROOT VARIABLES
+   ============================================================ */
+:root {
+  /* --- Typography --- */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+
+  --font-light: 300;
+  --font-regular: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --font-extrabold: 800;
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  /* --- Spacing --- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+
+  /* --- Radii --- */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-full: 9999px;
+
+  /* --- Shadows --- */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+
+  /* --- Transitions --- */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* --- Z-Index --- */
+  --z-dropdown: 50;
+  --z-sticky: 100;
+  --z-modal-backdrop: 200;
+  --z-modal: 300;
+  --z-toast: 400;
+
+  /* --- Layout --- */
+  --nav-height: 4rem;
+  --tab-bar-height: 4.5rem;
+  --max-content-width: 48rem;
+  --sidebar-width: 16rem;
+
+  /* --- Semantic: Status colors (fixed, independent of accent) --- */
+  --color-done: #22c55e;
+  --color-done-bg: rgba(34, 197, 94, 0.15);
+  --color-missed: #ef4444;
+  --color-missed-bg: rgba(239, 68, 68, 0.15);
+  --color-excused: #f59e0b;
+  --color-excused-bg: rgba(245, 158, 11, 0.15);
+
+  /* --- Priority colors --- */
+  --color-priority-low: #64748b;
+  --color-priority-medium: #f59e0b;
+  --color-priority-high: #ef4444;
+}
+
+/* ============================================================
+   ACCENT COLOR PALETTES
+   Swap via data-accent attribute on <html>
+   ============================================================ */
+
+/* 💜 Purple (default) */
+[data-accent="purple"], :root {
+  --accent: 262 80% 58%;
+  --accent-hsl: hsl(262, 80%, 58%);
+  --accent-hover: hsl(262, 80%, 50%);
+  --accent-subtle: hsl(262, 60%, 94%);
+  --accent-ghost: hsl(262, 60%, 96%);
+  --accent-muted: hsl(262, 30%, 70%);
+  --gradient-start: hsl(262, 80%, 58%);
+  --gradient-end: hsl(290, 70%, 50%);
+}
+
+/* 💙 Blue */
+[data-accent="blue"] {
+  --accent: 217 91% 60%;
+  --accent-hsl: hsl(217, 91%, 60%);
+  --accent-hover: hsl(217, 91%, 52%);
+  --accent-subtle: hsl(217, 80%, 94%);
+  --accent-ghost: hsl(217, 80%, 96%);
+  --accent-muted: hsl(217, 40%, 70%);
+  --gradient-start: hsl(217, 91%, 60%);
+  --gradient-end: hsl(240, 70%, 55%);
+}
+
+/* 🩵 Teal */
+[data-accent="teal"] {
+  --accent: 172 66% 50%;
+  --accent-hsl: hsl(172, 66%, 50%);
+  --accent-hover: hsl(172, 66%, 42%);
+  --accent-subtle: hsl(172, 50%, 93%);
+  --accent-ghost: hsl(172, 50%, 96%);
+  --accent-muted: hsl(172, 30%, 65%);
+  --gradient-start: hsl(172, 66%, 50%);
+  --gradient-end: hsl(195, 60%, 48%);
+}
+
+/* 🩷 Rose */
+[data-accent="rose"] {
+  --accent: 340 82% 60%;
+  --accent-hsl: hsl(340, 82%, 60%);
+  --accent-hover: hsl(340, 82%, 52%);
+  --accent-subtle: hsl(340, 70%, 94%);
+  --accent-ghost: hsl(340, 70%, 96%);
+  --accent-muted: hsl(340, 35%, 70%);
+  --gradient-start: hsl(340, 82%, 60%);
+  --gradient-end: hsl(310, 65%, 55%);
+}
+
+/* 🧡 Amber */
+[data-accent="amber"] {
+  --accent: 38 92% 55%;
+  --accent-hsl: hsl(38, 92%, 55%);
+  --accent-hover: hsl(38, 92%, 47%);
+  --accent-subtle: hsl(38, 80%, 94%);
+  --accent-ghost: hsl(38, 80%, 96%);
+  --accent-muted: hsl(38, 40%, 65%);
+  --gradient-start: hsl(38, 92%, 55%);
+  --gradient-end: hsl(20, 80%, 50%);
+}
+
+/* 💚 Emerald */
+[data-accent="emerald"] {
+  --accent: 160 84% 39%;
+  --accent-hsl: hsl(160, 84%, 39%);
+  --accent-hover: hsl(160, 84%, 32%);
+  --accent-subtle: hsl(160, 60%, 93%);
+  --accent-ghost: hsl(160, 60%, 96%);
+  --accent-muted: hsl(160, 30%, 60%);
+  --gradient-start: hsl(160, 84%, 39%);
+  --gradient-end: hsl(140, 70%, 45%);
+}
+
+/* ============================================================
+   DARK THEME (default)
+   ============================================================ */
+[data-theme="dark"] {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #12121a;
+  --bg-tertiary: #1a1a26;
+  --bg-card: rgba(255, 255, 255, 0.04);
+  --bg-card-hover: rgba(255, 255, 255, 0.07);
+  --bg-glass: rgba(255, 255, 255, 0.06);
+  --bg-glass-border: rgba(255, 255, 255, 0.08);
+  --bg-input: rgba(255, 255, 255, 0.06);
+  --bg-input-focus: rgba(255, 255, 255, 0.1);
+
+  --text-primary: #f0f0f5;
+  --text-secondary: #a0a0b8;
+  --text-tertiary: #6b6b85;
+  --text-inverse: #0a0a0f;
+
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.18);
+
+  --overlay: rgba(0, 0, 0, 0.6);
+  --backdrop-blur: blur(20px);
+
+  /* Dark mode shadows are more dramatic */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 20px rgba(var(--accent), 0.15);
+
+  /* Override accent-subtle for dark mode */
+  --accent-subtle: hsla(var(--accent), 0.12);
+  --accent-ghost: hsla(var(--accent), 0.06);
+
+  color-scheme: dark;
+}
+
+/* ============================================================
+   LIGHT THEME
+   ============================================================ */
+[data-theme="light"] {
+  --bg-primary: #fafafe;
+  --bg-secondary: #f2f2f8;
+  --bg-tertiary: #eaeaf0;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8f8fc;
+  --bg-glass: rgba(255, 255, 255, 0.8);
+  --bg-glass-border: rgba(0, 0, 0, 0.06);
+  --bg-input: #f4f4f8;
+  --bg-input-focus: #eeeef4;
+
+  --text-primary: #111118;
+  --text-secondary: #555570;
+  --text-tertiary: #8888a0;
+  --text-inverse: #fafafe;
+
+  --border-subtle: rgba(0, 0, 0, 0.04);
+  --border-default: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.14);
+
+  --overlay: rgba(0, 0, 0, 0.3);
+  --backdrop-blur: blur(20px);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  --shadow-glow: 0 0 20px rgba(var(--accent), 0.1);
+
+  color-scheme: light;
+}
+
+/* ============================================================
+   GLOBAL RESET & BASE STYLES
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: var(--leading-normal);
+  min-height: 100dvh;
+  transition: background var(--transition-base), color var(--transition-base);
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+  outline: none;
+}
+
+input,
+textarea,
+select {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  outline: none;
+  border: none;
+  background: none;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(var(--accent), 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(var(--accent), 0.4);
+  }
+}
+
+@keyframes checkmark {
+  0% {
+    transform: scale(0) rotate(-45deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ============================================================
+   UTILITY CLASSES
+   ============================================================ */
+.animate-fade-in { animation: fadeIn var(--transition-base) ease-out; }
+.animate-fade-in-up { animation: fadeInUp var(--transition-base) ease-out; }
+.animate-scale-in { animation: scaleIn var(--transition-spring) ease-out; }
+.animate-slide-in-right { animation: slideInRight var(--transition-base) ease-out; }
+
+/* Glassmorphism card */
+.glass-card {
+  background: var(--bg-glass);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
+  border: 1px solid var(--bg-glass-border);
+  border-radius: var(--radius-xl);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--accent-hsl);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Selection */
+::selection {
+  background: var(--accent-subtle);
+  color: var(--text-primary);
+}
+
+/* ============================================================
+   RESPONSIVE HELPERS
+   ============================================================ */
+@media (max-width: 768px) {
+  :root {
+    --text-3xl: 1.5rem;
+    --text-4xl: 1.875rem;
+  }
+}

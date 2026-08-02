@@ -1,0 +1,112 @@
+.tabBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-sticky);
+  background: var(--bg-glass);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
+  border-top: 1px solid var(--border-subtle);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.tabBarInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  height: var(--tab-bar-height);
+  padding: 0 var(--space-4);
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-lg);
+  color: var(--text-tertiary);
+  transition: color var(--transition-fast), transform var(--transition-fast);
+  position: relative;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.tab:active {
+  transform: scale(0.92);
+}
+
+.tab.active {
+  color: var(--accent-hsl);
+}
+
+.iconWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2rem;
+}
+
+.activeIndicator {
+  position: absolute;
+  inset: -2px;
+  background: var(--accent-subtle);
+  border-radius: var(--radius-lg);
+  z-index: -1;
+  animation: scaleIn var(--transition-spring) ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  letter-spacing: 0.02em;
+}
+
+/* Desktop: horizontal layout */
+@media (min-width: 769px) {
+  .tabBar {
+    position: fixed;
+    top: 0;
+    bottom: auto;
+    left: 0;
+    right: 0;
+    border-top: none;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 0;
+  }
+
+  .tabBarInner {
+    height: var(--nav-height);
+    justify-content: flex-start;
+    gap: var(--space-2);
+    padding: 0 var(--space-6);
+  }
+
+  .tab {
+    flex-direction: row;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+  }
+
+  .label {
+    font-size: var(--text-sm);
+  }
+}
