@@ -13,14 +13,14 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'TrackMe — Habit Tracker & Task Manager',
-  description: 'Build better habits, manage your daily tasks, and track your progress with TrackMe — a beautiful, offline-first productivity app.',
+  title: 'LocoMe — Habit Tracker & Task Manager',
+  description: 'Build better habits, manage your daily tasks, and track your progress with LocoMe — a beautiful, offline-first productivity app.',
   keywords: ['habit tracker', 'task manager', 'productivity', 'daily habits', 'streak tracker'],
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'TrackMe',
+    title: 'LocoMe',
   },
 };
 

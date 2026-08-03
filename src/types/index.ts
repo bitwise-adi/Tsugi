@@ -1,4 +1,4 @@
-// TrackMe — Type Definitions
+// LocoMe — Type Definitions
 
 export type AccentColor = 'purple' | 'blue' | 'teal' | 'rose' | 'amber' | 'emerald';
 export type ThemeMode = 'light' | 'dark' | 'system';

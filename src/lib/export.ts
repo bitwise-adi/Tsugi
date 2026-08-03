@@ -45,7 +45,7 @@ export async function exportAsJSON(): Promise<void> {
   };
 
   const timestamp = new Date().toISOString().split('T')[0];
-  downloadFile(JSON.stringify(data, null, 2), `trackme-backup-${timestamp}.json`, 'application/json');
+  downloadFile(JSON.stringify(data, null, 2), `locome-backup-${timestamp}.json`, 'application/json');
 }
 
 export async function exportAsCSV(): Promise<void> {
@@ -57,7 +57,7 @@ export async function exportAsCSV(): Promise<void> {
 
   const timestamp = new Date().toISOString().split('T')[0];
   const sections = [
-    `# TrackMe Export — ${timestamp}`,
+    `# LocoMe Export — ${timestamp}`,
     '',
     '## Habits',
     toCSV(habits as unknown as Record<string, unknown>[]),
@@ -69,5 +69,5 @@ export async function exportAsCSV(): Promise<void> {
     toCSV(tasks as unknown as Record<string, unknown>[]),
   ].join('\n');
 
-  downloadFile(sections, `trackme-export-${timestamp}.csv`, 'text/csv');
+  downloadFile(sections, `locome-export-${timestamp}.csv`, 'text/csv');
 }

@@ -1,7 +1,7 @@
 {
-  "name": "TrackMe",
-  "short_name": "TrackMe",
-  "description": "Build better habits and manage your daily tasks with TrackMe.",
+  "name": "LocoMe",
+  "short_name": "LocoMe",
+  "description": "Build better habits and manage your daily tasks with LocoMe.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0f",

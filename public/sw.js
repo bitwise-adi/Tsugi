@@ -1,7 +1,7 @@
-// TrackMe Service Worker
+// LocoMe Service Worker
 // Provides offline caching and notification handling
 
-const CACHE_NAME = 'trackme-v1';
+const CACHE_NAME = 'locome-v1';
 const STATIC_ASSETS = [
   '/',
   '/tasks',

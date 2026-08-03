@@ -1,7 +1,7 @@
 import Dexie, { type EntityTable } from 'dexie';
 import type { Habit, HabitEntry, Task, UserPreferences } from '@/types';
 
-const db = new Dexie('TrackMeDB') as Dexie & {
+const db = new Dexie('LocoMeDB') as Dexie & {
   habits: EntityTable<Habit, 'id'>;
   habitEntries: EntityTable<HabitEntry, 'id'>;
   tasks: EntityTable<Task, 'id'>;

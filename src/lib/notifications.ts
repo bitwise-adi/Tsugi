@@ -1,7 +1,7 @@
 // Client-side notification helpers for task reminders
 // Uses the browser Notification API — no server required
 
-const NOTIFICATION_PERMISSION_KEY = 'trackme-notification-permission';
+const NOTIFICATION_PERMISSION_KEY = 'locome-notification-permission';
 
 export async function requestNotificationPermission(): Promise<boolean> {
   if (!('Notification' in window)) {
@@ -30,7 +30,7 @@ export function showNotification(title: string, options?: NotificationOptions) {
     const notification = new Notification(title, {
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',
-      tag: options?.tag || 'trackme-default',
+      tag: options?.tag || 'locome-default',
       ...options,
     });
 
@@ -44,7 +44,7 @@ export function showNotification(title: string, options?: NotificationOptions) {
         reg.showNotification(title, {
           icon: '/icons/icon-192.png',
           badge: '/icons/icon-192.png',
-          tag: options?.tag || 'trackme-default',
+          tag: options?.tag || 'locome-default',
           ...options,
         });
       });

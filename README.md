@@ -1,6 +1,6 @@
-# TrackMe 🎯
+# LocoMe 🎯
 
-TrackMe is a beautiful, offline-first habit tracker and task manager designed to help you build consistency and stay on top of your daily goals. Built as a Progressive Web App (PWA), it works flawlessly on both desktop and mobile devices.
+LocoMe is a beautiful, offline-first habit tracker and task manager designed to help you build consistency and stay on top of your daily goals. Built as a Progressive Web App (PWA), it works flawlessly on both desktop and mobile devices.
 
 ## Features ✨
 
@@ -10,7 +10,7 @@ TrackMe is a beautiful, offline-first habit tracker and task manager designed to
 - **Cloud Sync:** Seamlessly sync your data across all your devices using Firebase Auth and Firestore. (Last-write-wins merging)
 - **Reminders:** Get timely browser notifications for your scheduled tasks.
 - **Customizable Themes:** Personalize your experience with Light, Dark, and System modes, along with multiple accent colors.
-- **PWA Ready:** Install TrackMe directly to your home screen for a native app-like experience.
+- **PWA Ready:** Install LocoMe directly to your home screen for a native app-like experience.
 
 ## Tech Stack 🛠️
 

@@ -65,7 +65,7 @@ export default function AuthPage() {
     <div className={styles.container}>
       <div className={styles.hero}>
         <div className={styles.logoIcon}>✓</div>
-        <h1 className={styles.heroTitle}>TrackMe</h1>
+        <h1 className={styles.heroTitle}>LocoMe</h1>
         <p className={styles.heroSub}>Sign in to sync your data across devices</p>
       </div>
 
@@ -140,7 +140,7 @@ export default function AuthPage() {
 
       <p className={styles.skipText}>
         <Mail size={14} />
-        You can use TrackMe without signing in — your data stays on this device.
+        You can use LocoMe without signing in — your data stays on this device.
       </p>
     </div>
   );

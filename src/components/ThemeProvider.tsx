@@ -13,8 +13,8 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const THEME_KEY = 'trackme-theme';
-const ACCENT_KEY = 'trackme-accent';
+const THEME_KEY = 'locome-theme';
+const ACCENT_KEY = 'locome-accent';
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeMode>('dark');
