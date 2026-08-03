@@ -38,6 +38,69 @@
   padding-top: var(--space-2);
 }
 
+/* --- Today's Summary --- */
+.todaySummary {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  animation: fadeInUp var(--transition-base) ease-out;
+}
+
+.greetingRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.greetingIcon {
+  color: var(--accent-hsl);
+}
+
+.greetingText {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--text-secondary);
+}
+
+.summaryCards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.summaryCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+}
+
+.summaryIconHabits {
+  color: var(--accent-hsl);
+  flex-shrink: 0;
+}
+
+.summaryIconTasks {
+  color: var(--color-done);
+  flex-shrink: 0;
+}
+
+.summaryValue {
+  font-weight: var(--font-bold);
+  font-size: var(--text-base);
+}
+
+.summaryLabel {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
 /* --- Habit List --- */
 .habitList {
   display: flex;

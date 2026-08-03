@@ -56,11 +56,27 @@
 
 .activeIndicator {
   position: absolute;
-  inset: -2px;
-  background: var(--accent-subtle);
-  border-radius: var(--radius-lg);
-  z-index: -1;
-  animation: scaleIn var(--transition-spring) ease-out;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--accent-hsl);
+  box-shadow: 0 0 8px var(--accent-hsl);
+  z-index: 1;
+  animation: dotIn var(--transition-spring) ease-out;
+}
+
+@keyframes dotIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
 }
 
 @keyframes scaleIn {

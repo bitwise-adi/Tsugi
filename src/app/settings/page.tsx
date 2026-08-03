@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/components/ThemeProvider';
-import { Sun, Moon, Monitor, Palette, Bell, BellOff } from 'lucide-react';
+import { useAuth } from '@/components/AuthProvider';
+import { Sun, Moon, Monitor, Palette, Bell, BellOff, Download, User, LogOut, RefreshCw, Database } from 'lucide-react';
 import { requestNotificationPermission, getNotificationPermission } from '@/lib/notifications';
+import { exportAsJSON, exportAsCSV } from '@/lib/export';
 import type { AccentColor, ThemeMode } from '@/types';
 import styles from './page.module.css';
 
@@ -24,7 +26,9 @@ const ACCENT_OPTIONS: { value: AccentColor; label: string; color: string }[] = [
 
 export default function SettingsPage() {
   const { theme, accentColor, setTheme, setAccentColor } = useTheme();
+  const { user, loading: authLoading, syncing, logout, triggerSync } = useAuth();
   const [notifPermission, setNotifPermission] = useState<NotificationPermission | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     setNotifPermission(getNotificationPermission());
@@ -35,11 +39,71 @@ export default function SettingsPage() {
     setNotifPermission(granted ? 'granted' : 'denied');
   };
 
+  const handleExport = async (type: 'json' | 'csv') => {
+    setExporting(true);
+    try {
+      if (type === 'json') await exportAsJSON();
+      else await exportAsCSV();
+    } catch (err) {
+      console.error('Export failed:', err);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className={styles.container}>
       <header className={styles.header}>
         <h1 className={styles.title}>Settings</h1>
       </header>
+
+      {/* Account Section */}
+      {!authLoading && (
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <User size={18} className={styles.sectionIcon} />
+            <h2 className={styles.sectionTitle}>Account</h2>
+          </div>
+          {user ? (
+            <div className={styles.accountCard}>
+              <div className={styles.accountInfo}>
+                <div className={styles.avatar}>
+                  {user.photoURL ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={user.photoURL} alt="" className={styles.avatarImg} />
+                  ) : (
+                    <User size={20} />
+                  )}
+                </div>
+                <div className={styles.accountDetails}>
+                  <p className={styles.accountName}>{user.displayName || 'User'}</p>
+                  <p className={styles.accountEmail}>{user.email}</p>
+                </div>
+              </div>
+              <div className={styles.accountActions}>
+                <button
+                  className={styles.syncBtn}
+                  onClick={triggerSync}
+                  disabled={syncing}
+                  id="sync-now-btn"
+                >
+                  <RefreshCw size={16} className={syncing ? styles.spinning : ''} />
+                  {syncing ? 'Syncing...' : 'Sync Now'}
+                </button>
+                <button className={styles.logoutBtn} onClick={logout} id="sign-out-btn">
+                  <LogOut size={16} />
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className={styles.accountCard}>
+              <p className={styles.notSignedIn}>Not signed in — data is stored locally on this device.</p>
+              <a href="/auth" className={styles.signInLink}>Sign in to sync across devices →</a>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Theme Mode */}
       <section className={styles.section}>
@@ -122,6 +186,41 @@ export default function SettingsPage() {
               Enable Notifications
             </button>
           )}
+        </div>
+      </section>
+
+      {/* Data Management */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <Database size={18} className={styles.sectionIcon} />
+          <h2 className={styles.sectionTitle}>Data Management</h2>
+        </div>
+        <p className={styles.sectionDesc}>Export your data for backup or analysis</p>
+        <div className={styles.exportGrid}>
+          <button
+            className={styles.exportBtn}
+            onClick={() => handleExport('json')}
+            disabled={exporting}
+            id="export-json-btn"
+          >
+            <Download size={18} />
+            <div>
+              <p className={styles.exportBtnTitle}>Export as JSON</p>
+              <p className={styles.exportBtnSub}>Full backup, importable later</p>
+            </div>
+          </button>
+          <button
+            className={styles.exportBtn}
+            onClick={() => handleExport('csv')}
+            disabled={exporting}
+            id="export-csv-btn"
+          >
+            <Download size={18} />
+            <div>
+              <p className={styles.exportBtnTitle}>Export as CSV</p>
+              <p className={styles.exportBtnSub}>Spreadsheet-friendly format</p>
+            </div>
+          </button>
         </div>
       </section>
 

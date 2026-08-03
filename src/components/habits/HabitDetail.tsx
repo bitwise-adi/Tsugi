@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import HabitHeatmap from './HabitHeatmap';
+import HabitChart from './HabitChart';
 import {
   format,
   startOfMonth,
@@ -128,6 +130,12 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
           <div className={styles.statValue}>{stats.rate}%</div>
           <div className={styles.statLabel}>Rate</div>
         </div>
+      </div>
+
+      {/* Analytics: Heatmap + Weekly Chart */}
+      <div className={styles.analyticsSection}>
+        <HabitHeatmap entries={entries} color={habit.color} />
+        <HabitChart entries={entries} color={habit.color} />
       </div>
 
       {/* Month Navigation */}

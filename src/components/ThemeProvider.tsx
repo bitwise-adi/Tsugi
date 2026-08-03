@@ -85,12 +85,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(ACCENT_KEY, color);
   }, []);
 
-  // Prevent flash of wrong theme
+  // Default context value used before mount (prevents SSR crash)
+  const defaultValue: ThemeContextType = {
+    theme,
+    resolvedTheme,
+    accentColor,
+    setTheme,
+    setAccentColor,
+  };
+
+  // Prevent flash of wrong theme — always provide context so useTheme works
   if (!mounted) {
     return (
-      <div style={{ visibility: 'hidden' }}>
-        {children}
-      </div>
+      <ThemeContext.Provider value={defaultValue}>
+        <div style={{ visibility: 'hidden' }}>
+          {children}
+        </div>
+      </ThemeContext.Provider>
     );
   }
 

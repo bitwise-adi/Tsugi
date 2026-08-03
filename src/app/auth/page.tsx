@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { signInWithGoogle, signInWithEmail, signUpWithEmail } from '@/lib/auth';
-import { LogIn, Mail, Chrome } from 'lucide-react';
+import { LogIn, Mail, Globe } from 'lucide-react';
 import styles from './page.module.css';
 
 export default function AuthPage() {
@@ -77,7 +77,7 @@ export default function AuthPage() {
           disabled={loading}
           id="google-sign-in"
         >
-          <Chrome size={20} />
+          <Globe size={20} />
           Continue with Google
         </button>
 

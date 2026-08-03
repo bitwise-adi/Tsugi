@@ -1,0 +1,141 @@
+.container {
+  margin-top: var(--space-4);
+  animation: fadeInUp 300ms ease-out;
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.heatmapScroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: var(--space-1);
+}
+
+/* Top row: spacer + month labels aligned with week columns */
+.topRow {
+  display: flex;
+  margin-bottom: 2px;
+}
+
+.dayLabelSpacer {
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.monthLabels {
+  display: flex;
+  gap: 3px;
+}
+
+.monthCell {
+  width: 14px;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  text-align: left;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+/* Grid body: day labels + week columns side by side */
+.gridBody {
+  display: flex;
+}
+
+.dayLabels {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.dayLabel {
+  height: 14px;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.weeksRow {
+  display: flex;
+  gap: 3px;
+}
+
+.weekCol {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* Cells */
+.cell {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  transition: transform 120ms ease;
+}
+
+.cell:hover {
+  transform: scale(1.5);
+  z-index: 2;
+  position: relative;
+}
+
+.cellBlank {
+  width: 14px;
+  height: 14px;
+}
+
+.cellEmpty {
+  background: var(--border-subtle);
+}
+
+.cellDone {
+  /* backgroundColor set inline via habit color */
+  opacity: 0.85;
+}
+
+.cellMissed {
+  background: var(--color-missed);
+  opacity: 0.75;
+}
+
+.cellExcused {
+  background: var(--color-excused);
+  opacity: 0.75;
+}
+
+/* Legend */
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.legendLabel {
+  font-size: 10px;
+  color: var(--text-tertiary);
+}
+
+.legendDivider {
+  width: 1px;
+  height: 10px;
+  background: var(--border-default);
+  margin: 0 2px;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

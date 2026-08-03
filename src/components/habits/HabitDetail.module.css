@@ -441,6 +441,15 @@
   margin-bottom: var(--space-5);
 }
 
+/* --- Analytics Section --- */
+.analyticsSection {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
 .confirmActions {
   display: flex;
   gap: var(--space-3);

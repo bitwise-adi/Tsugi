@@ -427,6 +427,12 @@ img {
 .animate-scale-in { animation: scaleIn var(--transition-spring) ease-out; }
 .animate-slide-in-right { animation: slideInRight var(--transition-base) ease-out; }
 
+/* Haptic-like press feedback */
+.press-scale:active {
+  transform: scale(0.97);
+  transition: transform 80ms ease-out;
+}
+
 /* Glassmorphism card */
 .glass-card {
   background: var(--bg-glass);
