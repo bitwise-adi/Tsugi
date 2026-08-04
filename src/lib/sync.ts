@@ -14,6 +14,18 @@ import { firestore } from './firebase';
 import { db } from './db';
 import type { Habit, HabitEntry, Task } from '@/types';
 
+// Firestore does not accept 'undefined' for any field value.
+// Strip undefined fields before writing to Firestore.
+function removeUndefinedFields<T extends Record<string, any>>(obj: T): T {
+  const result: Record<string, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      result[key] = value;
+    }
+  }
+  return result as T;
+}
+
 // Upload all local data to Firestore for a user
 export async function pushLocalToCloud(userId: string): Promise<void> {
   const batch = writeBatch(firestore);
@@ -22,21 +34,21 @@ export async function pushLocalToCloud(userId: string): Promise<void> {
   const habits = await db.habits.toArray();
   for (const habit of habits) {
     const ref = doc(firestore, 'users', userId, 'habits', habit.id);
-    batch.set(ref, { ...habit, userId });
+    batch.set(ref, removeUndefinedFields({ ...habit, userId }));
   }
 
   // Push habit entries
   const entries = await db.habitEntries.toArray();
   for (const entry of entries) {
     const ref = doc(firestore, 'users', userId, 'habitEntries', entry.id);
-    batch.set(ref, { ...entry, userId });
+    batch.set(ref, removeUndefinedFields({ ...entry, userId }));
   }
 
   // Push tasks
   const tasks = await db.tasks.toArray();
   for (const task of tasks) {
     const ref = doc(firestore, 'users', userId, 'tasks', task.id);
-    batch.set(ref, { ...task, userId });
+    batch.set(ref, removeUndefinedFields({ ...task, userId }));
   }
 
   await batch.commit();
@@ -93,17 +105,17 @@ export async function syncData(userId: string): Promise<void> {
 // Save a single item to Firestore
 export async function syncHabit(userId: string, habit: Habit): Promise<void> {
   const ref = doc(firestore, 'users', userId, 'habits', habit.id);
-  await setDoc(ref, { ...habit, userId });
+  await setDoc(ref, removeUndefinedFields({ ...habit, userId }));
 }
 
 export async function syncHabitEntry(userId: string, entry: HabitEntry): Promise<void> {
   const ref = doc(firestore, 'users', userId, 'habitEntries', entry.id);
-  await setDoc(ref, { ...entry, userId });
+  await setDoc(ref, removeUndefinedFields({ ...entry, userId }));
 }
 
 export async function syncTask(userId: string, task: Task): Promise<void> {
   const ref = doc(firestore, 'users', userId, 'tasks', task.id);
-  await setDoc(ref, { ...task, userId });
+  await setDoc(ref, removeUndefinedFields({ ...task, userId }));
 }
 
 export async function deleteSyncedHabit(userId: string, habitId: string): Promise<void> {

@@ -63,6 +63,29 @@
   margin-top: var(--space-1);
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.shareBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-full);
+  color: var(--text-tertiary);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.shareBtn:hover {
+  background: var(--accent-ghost);
+  color: var(--accent-hsl);
+}
+
 .deleteBtn {
   display: flex;
   align-items: center;
@@ -402,6 +425,33 @@
 .saveNoteBtn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* --- Done Button (status popup) --- */
+.doneBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  margin-top: var(--space-4);
+  background: var(--accent-hsl);
+  color: white;
+  border-radius: var(--radius-lg);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.doneBtn:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.doneBtn:active {
+  transform: scale(0.98);
 }
 
 /* --- Delete Confirmation --- */

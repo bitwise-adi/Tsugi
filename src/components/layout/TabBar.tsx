@@ -2,12 +2,13 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Target, CheckSquare, Settings } from 'lucide-react';
+import { Target, CheckSquare, Users, Settings } from 'lucide-react';
 import styles from './TabBar.module.css';
 
 const tabs = [
   { href: '/', label: 'Habits', icon: Target },
   { href: '/tasks', label: 'Tasks', icon: CheckSquare },
+  { href: '/shared', label: 'Shared', icon: Users },
   { href: '/settings', label: 'Settings', icon: Settings },
 ] as const;
 

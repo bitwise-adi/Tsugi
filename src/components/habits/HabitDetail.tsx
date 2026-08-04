@@ -16,6 +16,8 @@ import {
   isSameMonth,
 } from 'date-fns';
 import { useHabitEntries, calculateStreak } from '@/hooks/useHabits';
+import { useAuth } from '@/components/AuthProvider';
+import ShareHabitModal from './ShareHabitModal';
 import {
   ArrowLeft,
   ChevronLeft,
@@ -29,6 +31,7 @@ import {
   Hash,
   Trash2,
   MessageSquare,
+  Share2,
 } from 'lucide-react';
 import type { Habit, HabitStatus } from '@/types';
 import styles from './HabitDetail.module.css';
@@ -47,11 +50,13 @@ const STATUS_OPTIONS: { value: HabitStatus; label: string; icon: typeof Check; c
 
 export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProps) {
   const { entries, setEntry, updateNote, getEntryForDate } = useHabitEntries(habit.id);
+  const { user } = useAuth();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const stats = useMemo(() => calculateStreak(entries), [entries]);
 
@@ -80,6 +85,16 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
     setSelectedDate(null);
   };
 
+  // "Done" button handler — saves note if present, then closes popup
+  const handleDone = async () => {
+    if (!selectedDate) return;
+    // If user typed a note, save it
+    if (noteText.trim()) {
+      await updateNote(selectedDate, noteText);
+    }
+    setSelectedDate(null);
+  };
+
   const selectedEntry = selectedDate ? getEntryForDate(selectedDate) : null;
 
   return (
@@ -98,14 +113,26 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
             <p className={styles.description}>{habit.description}</p>
           )}
         </div>
-        <button
-          className={styles.deleteBtn}
-          onClick={() => setShowDeleteConfirm(true)}
-          id="habit-delete-btn"
-          aria-label="Delete habit"
-        >
-          <Trash2 size={18} />
-        </button>
+        <div className={styles.headerActions}>
+          {user && (
+            <button
+              className={styles.shareBtn}
+              onClick={() => setShowShareModal(true)}
+              id="habit-share-btn"
+              aria-label="Share habit"
+            >
+              <Share2 size={18} />
+            </button>
+          )}
+          <button
+            className={styles.deleteBtn}
+            onClick={() => setShowDeleteConfirm(true)}
+            id="habit-delete-btn"
+            aria-label="Delete habit"
+          >
+            <Trash2 size={18} />
+          </button>
+        </div>
       </header>
 
       {/* Stats Row */}
@@ -281,17 +308,28 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
                     rows={2}
                     id="habit-note-input"
                   />
-                  <button
-                    className={styles.saveNoteBtn}
-                    onClick={handleSaveNote}
-                    disabled={!noteText.trim()}
-                    id="save-note-btn"
-                  >
-                    Save Note
-                  </button>
+                  {noteText.trim() && (
+                    <button
+                      className={styles.saveNoteBtn}
+                      onClick={handleSaveNote}
+                      id="save-note-btn"
+                    >
+                      Save Note
+                    </button>
+                  )}
                 </div>
               )}
             </div>
+
+            {/* Done / Close Button — always visible */}
+            <button
+              className={styles.doneBtn}
+              onClick={handleDone}
+              id="status-done-btn"
+            >
+              <Check size={18} />
+              Done
+            </button>
           </div>
         </div>
       )}
@@ -321,6 +359,14 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
             </div>
           </div>
         </div>
+      )}
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <ShareHabitModal
+          habit={habit}
+          onClose={() => setShowShareModal(false)}
+        />
       )}
     </div>
   );

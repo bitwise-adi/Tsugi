@@ -1,14 +1,13 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useHabits } from '@/hooks/useHabits';
 import { useTasks, getTodayString } from '@/hooks/useTasks';
 import { db } from '@/lib/db';
-import { useEffect } from 'react';
 import HabitCard from '@/components/habits/HabitCard';
 import AddHabitModal from '@/components/habits/AddHabitModal';
 import HabitDetail from '@/components/habits/HabitDetail';
-import { Plus, Sparkles, Sun, Moon, Sunset, CheckCircle2, Target } from 'lucide-react';
+import { Plus, Sun, Moon, Sunset, CheckCircle2, Target, TrendingUp } from 'lucide-react';
 import type { Habit, HabitEntry } from '@/types';
 import styles from './page.module.css';
 
@@ -31,6 +30,43 @@ export default function HabitsPage() {
   useEffect(() => {
     db.habitEntries.where('date').equals(today).toArray().then(setTodayEntries);
   }, [habits, today]);
+
+  // --- URL Hash Navigation for HabitDetail ---
+  // When we enter a habit detail, push a hash so browser back works
+  const selectHabit = useCallback((habit: Habit) => {
+    setSelectedHabit(habit);
+    window.history.pushState({ habitId: habit.id }, '', `#habit-${habit.id}`);
+  }, []);
+
+  const deselectHabit = useCallback(() => {
+    setSelectedHabit(null);
+    // Only push state if hash is still present (avoid double push)
+    if (window.location.hash) {
+      window.history.pushState(null, '', window.location.pathname);
+    }
+  }, []);
+
+  // Handle browser back button
+  useEffect(() => {
+    const handlePopState = () => {
+      if (!window.location.hash.startsWith('#habit-')) {
+        setSelectedHabit(null);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Restore from hash on mount (e.g. page reload while viewing a habit)
+  useEffect(() => {
+    if (!loading && window.location.hash.startsWith('#habit-')) {
+      const habitId = window.location.hash.replace('#habit-', '');
+      const habit = habits.find(h => h.id === habitId);
+      if (habit) {
+        setSelectedHabit(habit);
+      }
+    }
+  }, [loading, habits]);
 
   const greeting = useMemo(() => getGreeting(), []);
   const GreetingIcon = greeting.icon;
@@ -61,10 +97,10 @@ export default function HabitsPage() {
     return (
       <HabitDetail
         habit={selectedHabit}
-        onBack={() => setSelectedHabit(null)}
+        onBack={deselectHabit}
         onDelete={async () => {
           await deleteHabit(selectedHabit.id);
-          setSelectedHabit(null);
+          deselectHabit();
         }}
       />
     );
@@ -72,25 +108,22 @@ export default function HabitsPage() {
 
   return (
     <div className={styles.container}>
-      <header className={styles.header}>
-        <div className={styles.headerContent}>
-          <h1 className={styles.title}>
-            <Sparkles size={28} className={styles.titleIcon} />
-            My Habits
+      {/* Hero Header */}
+      <header className={styles.hero}>
+        <div className={styles.heroGlow} />
+        <div className={styles.heroContent}>
+          <h1 className={styles.heroTitle}>
+            Loco<span className={styles.heroTitleAccent}>Me</span>
           </h1>
-          <p className={styles.subtitle}>
-            {habits.length === 0
-              ? 'Start building better habits today'
-              : `Tracking ${habits.length} habit${habits.length !== 1 ? 's' : ''}`}
+          <p className={styles.heroTagline}>
+            Build momentum. Track progress. Stay consistent.
           </p>
         </div>
-      </header>
 
-      {/* Today's Summary */}
-      {habits.length > 0 && (
-        <div className={styles.todaySummary}>
+        {/* Today's Summary — integrated into hero */}
+        <div className={styles.heroStats}>
           <div className={styles.greetingRow}>
-            <GreetingIcon size={18} className={styles.greetingIcon} />
+            <GreetingIcon size={16} className={styles.greetingIcon} />
             <span className={styles.greetingText}>{greeting.text}</span>
           </div>
           <div className={styles.summaryCards}>
@@ -108,9 +141,30 @@ export default function HabitsPage() {
               </span>
               <span className={styles.summaryLabel}>Tasks</span>
             </div>
+            {habits.length > 0 && (
+              <div className={styles.summaryCard}>
+                <TrendingUp size={16} className={styles.summaryIconStreak} />
+                <span className={styles.summaryValue}>
+                  {todayStats.habitsTotal > 0
+                    ? Math.round((todayStats.habitsDone / todayStats.habitsTotal) * 100)
+                    : 0}%
+                </span>
+                <span className={styles.summaryLabel}>Today</span>
+              </div>
+            )}
           </div>
         </div>
-      )}
+      </header>
+
+      {/* Habit subtitle */}
+      <div className={styles.sectionHeader}>
+        <h2 className={styles.sectionTitle}>My Habits</h2>
+        <span className={styles.sectionCount}>
+          {habits.length === 0
+            ? 'Start building better habits today'
+            : `${habits.length} habit${habits.length !== 1 ? 's' : ''}`}
+        </span>
+      </div>
 
       <div className={styles.content}>
         {habits.length === 0 ? (
@@ -139,7 +193,7 @@ export default function HabitsPage() {
               >
                 <HabitCard
                   habit={habit}
-                  onClick={() => setSelectedHabit(habit)}
+                  onClick={() => selectHabit(habit)}
                 />
               </div>
             ))}
