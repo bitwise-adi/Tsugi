@@ -230,10 +230,10 @@ export default function SettingsPage() {
           <h2 className={styles.sectionTitle}>About</h2>
         </div>
         <div className={styles.aboutCard}>
-          <p className={styles.appName}>LocoMe</p>
+          <p className={styles.appName}>Tsugi(t)</p>
           <p className={styles.appVersion}>Version 1.0.0</p>
           <p className={styles.aboutText}>
-            A habit tracker &amp; task manager built to help you build consistency and stay on top of your goals.
+            A habit tracker &amp; task manager built on the philosophy of continuous mending (Tsugi) as a function of time (t).
           </p>
         </div>
       </section>

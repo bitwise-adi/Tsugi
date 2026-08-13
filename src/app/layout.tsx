@@ -13,14 +13,14 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'LocoMe — Habit Tracker & Task Manager',
-  description: 'Build better habits, manage your daily tasks, and track your progress with LocoMe — a beautiful, offline-first productivity app.',
-  keywords: ['habit tracker', 'task manager', 'productivity', 'daily habits', 'streak tracker'],
+  title: 'Tsugi(t) — Habit Tracker & Task Manager',
+  description: 'Build better habits, manage your daily tasks, and track your progress with Tsugi(t) — a beautiful, offline-first productivity app.',
+  keywords: ['habit tracker', 'task manager', 'productivity', 'daily habits', 'streak tracker', 'tsugit'],
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'LocoMe',
+    title: 'Tsugi(t)',
   },
 };
 

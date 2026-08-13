@@ -1,7 +1,7 @@
-// LocoMe Service Worker
+// Tsugi(t) Service Worker
 // Provides offline caching and notification handling
 
-const CACHE_NAME = 'locome-v1';
+const CACHE_NAME = 'tsugit-v1';
 const STATIC_ASSETS = [
   '/',
   '/tasks',

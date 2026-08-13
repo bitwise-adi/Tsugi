@@ -1,7 +1,7 @@
 {
-  "name": "LocoMe",
-  "short_name": "LocoMe",
-  "description": "Build better habits and manage your daily tasks with LocoMe.",
+  "name": "Tsugi(t)",
+  "short_name": "Tsugi(t)",
+  "description": "Build better habits and manage your daily tasks with Tsugi(t).",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0f",

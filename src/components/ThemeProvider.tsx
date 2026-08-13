@@ -13,8 +13,8 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const THEME_KEY = 'locome-theme';
-const ACCENT_KEY = 'locome-accent';
+const THEME_KEY = 'tsugit-theme';
+const ACCENT_KEY = 'tsugit-accent';
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeMode>('dark');
@@ -33,10 +33,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return mode;
   }, []);
 
-  // Initialize from localStorage
+  // Initialize from localStorage (with fallback to legacy keys)
   useEffect(() => {
-    const savedTheme = localStorage.getItem(THEME_KEY) as ThemeMode | null;
-    const savedAccent = localStorage.getItem(ACCENT_KEY) as AccentColor | null;
+    const savedTheme = (localStorage.getItem(THEME_KEY) || localStorage.getItem('locome-theme')) as ThemeMode | null;
+    const savedAccent = (localStorage.getItem(ACCENT_KEY) || localStorage.getItem('locome-accent')) as AccentColor | null;
 
     const initialTheme = savedTheme || 'dark';
     const initialAccent = savedAccent || 'purple';

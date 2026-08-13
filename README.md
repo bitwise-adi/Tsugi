@@ -1,10 +1,12 @@
-# LocoMe 🎯
+# Tsugi(t) 🎯
 
-A beautiful, local-first habit tracker and task manager designed to help you build momentum, track consistency, and share progress with accountability partners. Built as a Progressive Web App (PWA) using Next.js 15, TypeScript, Dexie.js (IndexedDB), and Firebase.
+A beautiful, local-first habit tracker and task manager built on the philosophy of continuous mending (*Tsugi*) modeled as a function of time `(t)`. Designed to help you build momentum, track consistency, and share progress with accountability partners. Built as a Progressive Web App (PWA) using Next.js 16, React 19, TypeScript, Dexie.js (IndexedDB), and Firebase.
 
-![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-tsugit.bitwise--adi.dev-7c3aed?style=flat-square&logo=vercel)](https://tsugit.bitwise-adi.dev)
+![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)
+![React](https://img.shields.io/badge/React-19-blue?style=flat-square&logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square&logo=typescript)
-![Firebase](https://img.shields.io/badge/Firebase-Auth%20%26%20Firestore-orange?style=flat-square&logo=firebase)
+![Firebase](https://img.shields.io/badge/Firebase-v12-orange?style=flat-square&logo=firebase)
 ![Dexie.js](https://img.shields.io/badge/Dexie.js-IndexedDB-green?style=flat-square)
 ![PWA](https://img.shields.io/badge/PWA-Ready-purple?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
@@ -55,11 +57,11 @@ A beautiful, local-first habit tracker and task manager designed to help you bui
 
 | Layer | Technology |
 |---|---|
-| **Framework** | [Next.js 15](https://nextjs.org/) (App Router, Turbopack) |
+| **Framework** | [Next.js 16](https://nextjs.org/) (App Router, Turbopack, React 19) |
 | **Language** | [TypeScript](https://www.typescriptlang.org/) |
 | **Styling** | Vanilla CSS Modules & CSS Variables (zero runtime CSS-in-JS) |
 | **Local Database** | [Dexie.js](https://dexie.org/) (IndexedDB wrapper) |
-| **Authentication & Cloud** | [Firebase v11](https://firebase.google.com/) (Auth & Firestore) |
+| **Authentication & Cloud** | [Firebase v12](https://firebase.google.com/) (Auth & Firestore) |
 | **Icons** | [Lucide React](https://lucide.dev/) |
 | **Date Utilities** | [date-fns](https://date-fns.org/) |
 
@@ -69,8 +71,8 @@ A beautiful, local-first habit tracker and task manager designed to help you bui
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/your-username/trackme.git
-cd trackme
+git clone git@github.com:bitwise-adi/Tsugi.git
+cd Tsugi
 ```
 
 ### 2. Install Dependencies
@@ -154,7 +156,7 @@ service cloud.firestore {
 ## 📂 Project Structure
 
 ```
-trackme/
+tsugit/
 ├── public/                # Static assets, PWA manifest, service worker
 │   ├── manifest.json
 │   ├── sw.js
