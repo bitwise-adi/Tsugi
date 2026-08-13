@@ -8,20 +8,20 @@ export default function SplashScreen() {
   const [phase, setPhase] = useState<'active' | 'blackout' | 'revealing' | 'done'>('active');
 
   useEffect(() => {
-    // Stage 1: Display logo + brand name for ~1.3 seconds
+    // Stage 1: Display logo + brand name for 1.2 seconds
     const timer1 = setTimeout(() => {
-      setPhase('blackout'); // Content fades out, leaving pure black screen
-    }, 1300);
+      setPhase('blackout'); // Content fades out, leaving solid pure black screen
+    }, 1200);
 
-    // Stage 2: 60ms pure black screen pause, then curtain starts lifting
+    // Stage 2: Hold the pitch-black screen for ~250ms so the blackout is distinctly felt
     const timer2 = setTimeout(() => {
-      setPhase('revealing'); // Overlay fades out to reveal the app
-    }, 1370);
+      setPhase('revealing'); // Black curtain dissolves to reveal the app
+    }, 1500);
 
-    // Stage 3: Complete transition and unmount component
+    // Stage 3: Complete transition and unmount
     const timer3 = setTimeout(() => {
       setPhase('done');
-    }, 1700);
+    }, 1800);
 
     return () => {
       clearTimeout(timer1);
