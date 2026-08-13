@@ -17,6 +17,13 @@ export const metadata: Metadata = {
   description: 'Build better habits, manage your daily tasks, and track your progress with Tsugi(t) — a beautiful, offline-first productivity app.',
   keywords: ['habit tracker', 'task manager', 'productivity', 'daily habits', 'streak tracker', 'tsugit'],
   manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: '/icons/icon-192.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
