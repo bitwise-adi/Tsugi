@@ -113,7 +113,7 @@ export default function HabitsPage() {
         <div className={styles.heroGlow} />
         <div className={styles.heroContent}>
           <h1 className={styles.heroTitle}>
-            Loco<span className={styles.heroTitleAccent}>Me</span>
+            Tsugi<span className={styles.heroTitleAccent}>(t)</span>
           </h1>
           <p className={styles.heroTagline}>
             Build momentum. Track progress. Stay consistent.
