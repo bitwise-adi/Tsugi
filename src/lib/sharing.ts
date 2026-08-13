@@ -130,6 +130,20 @@ export async function getSharedWithMe(userId: string): Promise<HabitShare[]> {
 }
 
 /**
+ * Get all active shares created BY this user (habits they shared out to others).
+ */
+export async function getSharedByMe(userId: string): Promise<HabitShare[]> {
+  const q = query(
+    collection(firestore, 'habitShares'),
+    where('ownerUserId', '==', userId),
+    where('status', '==', 'active')
+  );
+
+  const snap = await getDocs(q);
+  return snap.docs.map(d => d.data() as HabitShare);
+}
+
+/**
  * Get shares the user has created for a specific habit.
  */
 export async function getMyShares(userId: string, habitId: string): Promise<HabitShare[]> {

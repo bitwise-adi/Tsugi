@@ -59,7 +59,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <main style={{
-              paddingBottom: 'calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px))',
+              paddingBottom: 'calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px) + var(--space-8))',
               paddingTop: '0',
               minHeight: '100dvh',
             }}>

@@ -4,10 +4,9 @@
   left: 0;
   right: 0;
   z-index: var(--z-sticky);
-  background: var(--bg-glass);
-  backdrop-filter: var(--backdrop-blur);
-  -webkit-backdrop-filter: var(--backdrop-blur);
+  background: var(--bg-primary);
   border-top: 1px solid var(--border-subtle);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.35);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 

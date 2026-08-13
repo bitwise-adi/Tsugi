@@ -183,13 +183,13 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: var(--space-16) var(--space-4);
+  padding: var(--space-8) var(--space-4);
   animation: fadeIn var(--transition-slow) ease-out;
 }
 
 .emptyIcon {
-  font-size: 4rem;
-  margin-bottom: var(--space-6);
+  font-size: 3.5rem;
+  margin-bottom: var(--space-3);
   animation: pulse 2s ease-in-out infinite;
 }
 
@@ -204,7 +204,7 @@
   font-size: var(--text-sm);
   max-width: 20rem;
   line-height: var(--leading-relaxed);
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-5);
 }
 
 .emptyButton {
