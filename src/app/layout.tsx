@@ -5,6 +5,7 @@ import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { AuthProvider } from '@/components/AuthProvider';
 import TabBar from '@/components/layout/TabBar';
+import SplashScreen from '@/components/layout/SplashScreen';
 import './globals.css';
 
 const inter = Inter({
@@ -21,8 +22,12 @@ export const metadata: Metadata = {
     icon: [
       { url: '/icon.svg', type: 'image/svg+xml' },
       { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
     ],
-    apple: '/icons/icon-192.png',
+    apple: [
+      { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
   },
   appleWebApp: {
     capable: true,
@@ -50,6 +55,7 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="dark" data-accent="purple" className={inter.className}>
       <body>
+        <SplashScreen />
         <ThemeProvider>
           <AuthProvider>
             <main style={{

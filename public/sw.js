@@ -7,6 +7,7 @@ const STATIC_ASSETS = [
   '/tasks',
   '/settings',
   '/manifest.json',
+  '/icon.svg',
 ];
 
 // Install: pre-cache shell
