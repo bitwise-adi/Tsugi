@@ -83,7 +83,7 @@ export default function AddHabitModal({ onClose, onAdd }: AddHabitModalProps) {
       computedInterval = undefined;
     } else if (frequency === 'custom') {
       computedCustomDays = customDays.length > 0 ? customDays : [1, 3, 5];
-      computedInterval = 1;
+      computedInterval = intervalWeeks;
     }
 
     setSaving(true);
@@ -116,7 +116,8 @@ export default function AddHabitModal({ onClose, onAdd }: AddHabitModalProps) {
     }
     if (frequency === 'custom') {
       const daysText = customDays.map(d => DAY_LABELS[d]).join(', ');
-      return `Repeats every week on ${daysText}`;
+      const intervalText = intervalWeeks === 1 ? 'every week' : `every ${intervalWeeks} weeks`;
+      return `Repeats ${intervalText} on ${daysText}`;
     }
     return '';
   };
@@ -289,6 +290,29 @@ export default function AddHabitModal({ onClose, onAdd }: AddHabitModalProps) {
               {/* Custom Days Configuration: Multi-day in week */}
               {frequency === 'custom' && (
                 <div className={styles.configBody}>
+                  {/* Step 1: Interval selection */}
+                  <div className={styles.configSubSection}>
+                    <label className={styles.configSubLabel}>
+                      <Repeat size={14} />
+                      How often should it repeat?
+                    </label>
+                    <div className={styles.intervalGridThree}>
+                      {INTERVAL_OPTIONS.map(opt => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          className={`${styles.intervalBtn} ${intervalWeeks === opt.value ? styles.intervalActive : ''}`}
+                          onClick={() => setIntervalWeeks(opt.value)}
+                          id={`custom-interval-${opt.value}`}
+                        >
+                          <span className={styles.intervalTitle}>{opt.label}</span>
+                          <span className={styles.intervalDesc}>{opt.desc}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Step 2: Target days */}
                   <div className={styles.configSubSection}>
                     <label className={styles.configSubLabel}>
                       <Calendar size={14} />
