@@ -235,6 +235,12 @@
   gap: var(--space-2);
 }
 
+.intervalGridThree {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+}
+
 .intervalBtn {
   display: flex;
   flex-direction: column;
@@ -402,14 +408,15 @@
   align-items: center;
   gap: var(--space-2);
   background: var(--accent-subtle);
-  border: 1px solid var(--accent-hsl);
+  border: 1px solid var(--border-default);
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-lg);
 }
 
-.summaryIcon {
+.summaryBullet {
   color: var(--accent-hsl);
-  flex-shrink: 0;
+  font-size: var(--text-base);
+  line-height: 1;
 }
 
 .summaryText {

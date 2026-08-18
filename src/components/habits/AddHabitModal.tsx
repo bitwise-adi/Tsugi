@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { X, Calendar, Repeat, Sparkles, Check } from 'lucide-react';
+import { X, Calendar, Repeat, Check } from 'lucide-react';
 import type { Habit, HabitFrequency } from '@/types';
 import styles from './AddHabitModal.module.css';
 
@@ -12,9 +12,9 @@ interface AddHabitModalProps {
 
 const FREQUENCIES: { value: HabitFrequency; label: string; description: string; tag?: string }[] = [
   { value: 'daily', label: 'Daily', description: 'Every day' },
-  { value: 'weekly', label: 'Weekly', description: 'Every 1, 2, 3, or 4 weeks', tag: 'Customizable' },
-  { value: 'monthly', label: 'Monthly', description: 'Once a month on specific day', tag: 'Date-based' },
-  { value: 'custom', label: 'Custom Days', description: 'Target days & intervals', tag: 'Flexible' },
+  { value: 'weekly', label: 'Weekly', description: 'One day every 1, 2, or 3 weeks', tag: 'Cadence' },
+  { value: 'monthly', label: 'Monthly', description: 'Once a month on a date', tag: 'Monthly' },
+  { value: 'custom', label: 'Custom Days', description: 'Multiple days each week', tag: 'Multi-day' },
 ];
 
 const COLORS = [
@@ -26,9 +26,8 @@ const COLORS = [
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const INTERVAL_OPTIONS = [
   { value: 1, label: 'Every week', desc: '1 week' },
-  { value: 2, label: 'Every 2 weeks', desc: 'Biweekly' },
+  { value: 2, label: 'Every 2 weeks', desc: '2 weeks' },
   { value: 3, label: 'Every 3 weeks', desc: '3 weeks' },
-  { value: 4, label: 'Every 4 weeks', desc: '4 weeks' },
 ];
 
 export default function AddHabitModal({ onClose, onAdd }: AddHabitModalProps) {
@@ -40,14 +39,14 @@ export default function AddHabitModal({ onClose, onAdd }: AddHabitModalProps) {
   const [description, setDescription] = useState('');
   const [frequency, setFrequency] = useState<HabitFrequency>('daily');
   
-  // Weekly & Interval state
+  // Weekly state (single day + 1/2/3 week interval)
   const [intervalWeeks, setIntervalWeeks] = useState<number>(1);
-  const [weeklyDays, setWeeklyDays] = useState<number[]>([today.getDay()]);
+  const [weeklyDay, setWeeklyDay] = useState<number>(today.getDay());
   
   // Monthly state
   const [monthlyDay, setMonthlyDay] = useState<number>(today.getDate());
   
-  // Custom state
+  // Custom days state (multiple days per week)
   const [customDays, setCustomDays] = useState<number[]>([1, 3, 5]); // Mon, Wed, Fri
   
   const [color, setColor] = useState(COLORS[0]);
@@ -61,17 +60,6 @@ export default function AddHabitModal({ onClose, onAdd }: AddHabitModalProps) {
         configSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }, 60);
     }
-  };
-
-  const toggleWeeklyDay = (day: number) => {
-    setWeeklyDays(prev => {
-      if (prev.includes(day)) {
-        // Keep at least one day selected
-        if (prev.length === 1) return prev;
-        return prev.filter(d => d !== day);
-      }
-      return [...prev, day];
-    });
   };
 
   const toggleCustomDay = (day: number) => {
@@ -88,14 +76,14 @@ export default function AddHabitModal({ onClose, onAdd }: AddHabitModalProps) {
     let computedInterval: number | undefined;
 
     if (frequency === 'weekly') {
-      computedCustomDays = weeklyDays.length > 0 ? weeklyDays : [today.getDay()];
+      computedCustomDays = [weeklyDay];
       computedInterval = intervalWeeks;
     } else if (frequency === 'monthly') {
       computedCustomDays = [monthlyDay];
       computedInterval = undefined;
     } else if (frequency === 'custom') {
       computedCustomDays = customDays.length > 0 ? customDays : [1, 3, 5];
-      computedInterval = intervalWeeks;
+      computedInterval = 1;
     }
 
     setSaving(true);
@@ -114,13 +102,13 @@ export default function AddHabitModal({ onClose, onAdd }: AddHabitModalProps) {
     }
   };
 
-  // Schedule summary description generator
+  // Schedule summary description generator (clean, no AI icons)
   const getSummaryText = () => {
     if (frequency === 'daily') return 'Repeats every day';
     if (frequency === 'weekly') {
-      const daysText = weeklyDays.map(d => DAY_LABELS[d]).join(', ');
+      const dayName = DAY_LABELS[weeklyDay];
       const intervalText = intervalWeeks === 1 ? 'every week' : `every ${intervalWeeks} weeks`;
-      return `Repeats ${intervalText} on ${daysText}`;
+      return `Repeats ${intervalText} on ${dayName}`;
     }
     if (frequency === 'monthly') {
       const suffix = ['th', 'st', 'nd', 'rd'][(monthlyDay % 100 > 10 && monthlyDay % 100 < 14) ? 0 : (monthlyDay % 10 < 4 ? monthlyDay % 10 : 0)];
@@ -128,8 +116,7 @@ export default function AddHabitModal({ onClose, onAdd }: AddHabitModalProps) {
     }
     if (frequency === 'custom') {
       const daysText = customDays.map(d => DAY_LABELS[d]).join(', ');
-      const intervalText = intervalWeeks === 1 ? 'every week' : `every ${intervalWeeks} weeks`;
-      return `Repeats ${intervalText} on ${daysText}`;
+      return `Repeats every week on ${daysText}`;
     }
     return '';
   };
@@ -205,19 +192,19 @@ export default function AddHabitModal({ onClose, onAdd }: AddHabitModalProps) {
                   <Calendar size={16} className={styles.configIcon} />
                   <h3 className={styles.configTitle}>Schedule Details</h3>
                 </div>
-                <span className={styles.configSubtitle}>Select your repeat cadence & days</span>
+                <span className={styles.configSubtitle}>Set your preferred repeat pattern</span>
               </div>
 
-              {/* Weekly & Multi-week configuration */}
+              {/* Weekly Configuration: 1 day + 1/2/3 week interval */}
               {frequency === 'weekly' && (
                 <div className={styles.configBody}>
-                  {/* Step 1: Interval selection */}
+                  {/* Step 1: Interval */}
                   <div className={styles.configSubSection}>
                     <label className={styles.configSubLabel}>
                       <Repeat size={14} />
                       How often should it repeat?
                     </label>
-                    <div className={styles.intervalGrid}>
+                    <div className={styles.intervalGridThree}>
                       {INTERVAL_OPTIONS.map(opt => (
                         <button
                           key={opt.value}
@@ -233,21 +220,21 @@ export default function AddHabitModal({ onClose, onAdd }: AddHabitModalProps) {
                     </div>
                   </div>
 
-                  {/* Step 2: Day selection */}
+                  {/* Step 2: Single Day Selection */}
                   <div className={styles.configSubSection}>
                     <label className={styles.configSubLabel}>
                       <Calendar size={14} />
-                      On which day(s) of the week?
+                      Which day of the week?
                     </label>
                     <div className={styles.daysRow}>
                       {DAY_LABELS.map((label, i) => {
-                        const isSelected = weeklyDays.includes(i);
+                        const isSelected = weeklyDay === i;
                         return (
                           <button
                             key={i}
                             type="button"
                             className={`${styles.dayBtn} ${isSelected ? styles.dayActive : ''}`}
-                            onClick={() => toggleWeeklyDay(i)}
+                            onClick={() => setWeeklyDay(i)}
                             id={`weekly-day-${i}`}
                           >
                             <span className={styles.dayBtnText}>{label}</span>
@@ -260,7 +247,7 @@ export default function AddHabitModal({ onClose, onAdd }: AddHabitModalProps) {
                 </div>
               )}
 
-              {/* Monthly configuration */}
+              {/* Monthly Configuration */}
               {frequency === 'monthly' && (
                 <div className={styles.configBody}>
                   <div className={styles.configSubSection}>
@@ -299,32 +286,13 @@ export default function AddHabitModal({ onClose, onAdd }: AddHabitModalProps) {
                 </div>
               )}
 
-              {/* Custom days configuration */}
+              {/* Custom Days Configuration: Multi-day in week */}
               {frequency === 'custom' && (
                 <div className={styles.configBody}>
                   <div className={styles.configSubSection}>
                     <label className={styles.configSubLabel}>
-                      <Repeat size={14} />
-                      Repeat Cadence
-                    </label>
-                    <div className={styles.intervalGrid}>
-                      {INTERVAL_OPTIONS.map(opt => (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          className={`${styles.intervalBtn} ${intervalWeeks === opt.value ? styles.intervalActive : ''}`}
-                          onClick={() => setIntervalWeeks(opt.value)}
-                        >
-                          <span className={styles.intervalTitle}>{opt.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className={styles.configSubSection}>
-                    <label className={styles.configSubLabel}>
                       <Calendar size={14} />
-                      Target Days
+                      Select Days in the Week
                     </label>
                     <div className={styles.presetRow}>
                       <button
@@ -350,25 +318,29 @@ export default function AddHabitModal({ onClose, onAdd }: AddHabitModalProps) {
                       </button>
                     </div>
                     <div className={styles.daysRow}>
-                      {DAY_LABELS.map((label, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          className={`${styles.dayBtn} ${customDays.includes(i) ? styles.dayActive : ''}`}
-                          onClick={() => toggleCustomDay(i)}
-                          id={`custom-day-${i}`}
-                        >
-                          {label}
-                        </button>
-                      ))}
+                      {DAY_LABELS.map((label, i) => {
+                        const isSelected = customDays.includes(i);
+                        return (
+                          <button
+                            key={i}
+                            type="button"
+                            className={`${styles.dayBtn} ${isSelected ? styles.dayActive : ''}`}
+                            onClick={() => toggleCustomDay(i)}
+                            id={`custom-day-${i}`}
+                          >
+                            <span className={styles.dayBtnText}>{label}</span>
+                            {isSelected && <Check size={10} className={styles.dayCheck} />}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Dynamic Live Summary Banner */}
+              {/* Clean Live Summary Banner (No AI Sparkles) */}
               <div className={styles.summaryBanner}>
-                <Sparkles size={14} className={styles.summaryIcon} />
+                <span className={styles.summaryBullet}>•</span>
                 <span className={styles.summaryText}>{getSummaryText()}</span>
               </div>
             </div>
