@@ -99,6 +99,12 @@
   background: var(--border-subtle);
 }
 
+.cellOffDay {
+  background: transparent;
+  border: 1px dashed var(--border-subtle);
+  opacity: 0.35;
+}
+
 .cellDone {
   /* backgroundColor set inline via habit color */
   opacity: 0.85;

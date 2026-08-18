@@ -2,18 +2,20 @@
 
 import { useMemo } from 'react';
 import { format, subDays, isAfter } from 'date-fns';
-import type { HabitEntry } from '@/types';
+import { isHabitScheduledOnDate } from '@/lib/schedule';
+import type { Habit, HabitEntry } from '@/types';
 import styles from './HabitHeatmap.module.css';
 
 interface HabitHeatmapProps {
   entries: HabitEntry[];
   color: string;
+  habit?: Habit;
 }
 
 // Show ~13 weeks (91 days = ~3 months) — fits well on mobile
 const TOTAL_DAYS = 91;
 
-export default function HabitHeatmap({ entries, color }: HabitHeatmapProps) {
+export default function HabitHeatmap({ entries, color, habit }: HabitHeatmapProps) {
   const { weeks, monthLabels } = useMemo(() => {
     const today = new Date();
     today.setHours(23, 59, 59, 999);
@@ -28,7 +30,13 @@ export default function HabitHeatmap({ entries, color }: HabitHeatmapProps) {
 
     // Build week columns
     const weekCols: {
-      cells: { date: string; day: number; status?: HabitEntry['status']; isFuture: boolean }[];
+      cells: {
+        date: string;
+        day: number;
+        status?: HabitEntry['status'];
+        isScheduled: boolean;
+        isFuture: boolean;
+      }[];
     }[] = [];
     const months: { label: string; colIndex: number }[] = [];
     let lastMonth = -1;
@@ -50,12 +58,14 @@ export default function HabitHeatmap({ entries, color }: HabitHeatmapProps) {
 
       const dateStr = format(d, 'yyyy-MM-dd');
       const isFuture = isAfter(d, today);
+      const isScheduled = habit ? isHabitScheduledOnDate(habit, d) : true;
       const currentWeek = weekCols[weekCols.length - 1];
       if (currentWeek) {
         currentWeek.cells.push({
           date: dateStr,
           day: d.getDay(),
           status: isFuture ? undefined : entryMap.get(dateStr),
+          isScheduled,
           isFuture,
         });
       }
@@ -68,7 +78,9 @@ export default function HabitHeatmap({ entries, color }: HabitHeatmapProps) {
     }
 
     return { weeks: weekCols, monthLabels: months };
-  }, [entries]);
+  }, [entries, habit]);
+
+  const isScheduleSpecific = habit && habit.frequency !== 'daily';
 
   return (
     <div className={styles.container}>
@@ -113,13 +125,21 @@ export default function HabitHeatmap({ entries, color }: HabitHeatmapProps) {
                   if (cell.status === 'done') cls = styles.cellDone;
                   else if (cell.status === 'missed') cls = styles.cellMissed;
                   else if (cell.status === 'excused') cls = styles.cellExcused;
+                  else if (!cell.isScheduled) cls = styles.cellOffDay;
+
+                  const dateLabel = format(new Date(cell.date + 'T12:00:00'), 'EEE, MMM d');
+                  const statusDesc = cell.status
+                    ? cell.status
+                    : !cell.isScheduled
+                    ? 'off-day'
+                    : 'no entry';
 
                   return (
                     <div
                       key={dayIdx}
                       className={`${styles.cell} ${cls}`}
                       style={cell.status === 'done' ? { backgroundColor: color } as React.CSSProperties : undefined}
-                      title={`${format(new Date(cell.date + 'T12:00:00'), 'EEE, MMM d')}: ${cell.status || 'no entry'}`}
+                      title={`${dateLabel}: ${statusDesc}`}
                     />
                   );
                 })}
@@ -131,8 +151,15 @@ export default function HabitHeatmap({ entries, color }: HabitHeatmapProps) {
 
       {/* Legend */}
       <div className={styles.legend}>
-        <span className={styles.legendLabel}>No entry</span>
+        <span className={styles.legendLabel}>Scheduled</span>
         <div className={`${styles.cell} ${styles.cellEmpty}`} />
+        {isScheduleSpecific && (
+          <>
+            <span className={styles.legendDivider} />
+            <span className={styles.legendLabel}>Off-day</span>
+            <div className={`${styles.cell} ${styles.cellOffDay}`} />
+          </>
+        )}
         <span className={styles.legendDivider} />
         <span className={styles.legendLabel}>Done</span>
         <div className={`${styles.cell} ${styles.cellDone}`} style={{ backgroundColor: color }} />

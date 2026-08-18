@@ -8,6 +8,7 @@ import HabitCard from '@/components/habits/HabitCard';
 import AddHabitModal from '@/components/habits/AddHabitModal';
 import HabitDetail from '@/components/habits/HabitDetail';
 import { Plus, Sun, Moon, Sunset, CheckCircle2, Target, TrendingUp } from 'lucide-react';
+import { isHabitScheduledOnDate } from '@/lib/schedule';
 import type { Habit, HabitEntry } from '@/types';
 import styles from './page.module.css';
 
@@ -78,11 +79,13 @@ export default function HabitsPage() {
   const GreetingIcon = greeting.icon;
 
   const todayStats = useMemo(() => {
+    const today = new Date();
+    const scheduledHabits = habits.filter(h => isHabitScheduledOnDate(h, today));
     const doneCount = todayEntries.filter(e => e.status === 'done').length;
     const completedTasks = tasks.filter(t => t.completed).length;
     return {
       habitsDone: doneCount,
-      habitsTotal: habits.length,
+      habitsTotal: scheduledHabits.length,
       tasksDone: completedTasks,
       tasksTotal: tasks.length,
     };

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/db';
 import { calculateStreak } from '@/hooks/useHabits';
+import { getFrequencyLabel, isHabitScheduledOnDate } from '@/lib/schedule';
 import { ChevronRight, Flame, TrendingUp } from 'lucide-react';
 import type { Habit, HabitEntry } from '@/types';
 import styles from './HabitCard.module.css';
@@ -23,7 +24,7 @@ export default function HabitCard({ habit, onClick }: HabitCardProps) {
         .equals(habit.id)
         .toArray();
       setEntries(allEntries);
-      setStats(calculateStreak(allEntries));
+      setStats(calculateStreak(allEntries, habit));
     };
     load();
 
@@ -32,7 +33,7 @@ export default function HabitCard({ habit, onClick }: HabitCardProps) {
     };
     window.addEventListener('tsugi:data-synced', handleSynced);
     return () => window.removeEventListener('tsugi:data-synced', handleSynced);
-  }, [habit.id]);
+  }, [habit]);
 
   // Get last 7 days status for mini preview
   const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -40,16 +41,12 @@ export default function HabitCard({ habit, onClick }: HabitCardProps) {
     d.setDate(d.getDate() - (6 - i));
     const dateStr = d.toISOString().split('T')[0];
     const entry = entries.find(e => e.date === dateStr);
-    return { date: dateStr, status: entry?.status };
+    const isScheduled = isHabitScheduledOnDate(habit, d);
+    return { date: dateStr, status: entry?.status, isScheduled };
   });
 
-  const frequencyLabel = {
-    daily: 'Daily',
-    weekly: 'Weekly',
-    biweekly: 'Biweekly',
-    monthly: 'Monthly',
-    custom: 'Custom',
-  }[habit.frequency];
+  const frequencyLabel = getFrequencyLabel(habit);
+  const streakUnit = habit.frequency === 'weekly' ? 'wk' : habit.frequency === 'monthly' ? 'mo' : 'day';
 
   return (
     <button
@@ -68,20 +65,29 @@ export default function HabitCard({ habit, onClick }: HabitCardProps) {
         </div>
 
         <div className={styles.weekPreview}>
-          {last7Days.map((day) => (
-            <div
-              key={day.date}
-              className={`${styles.dayDot} ${day.status ? styles[`dot_${day.status}`] : styles.dot_empty}`}
-              title={day.date}
-            />
-          ))}
+          {last7Days.map((day) => {
+            let dotCls = styles.dot_empty;
+            if (day.status) {
+              dotCls = styles[`dot_${day.status}`];
+            } else if (!day.isScheduled) {
+              dotCls = styles.dot_off;
+            }
+
+            return (
+              <div
+                key={day.date}
+                className={`${styles.dayDot} ${dotCls}`}
+                title={`${day.date}: ${day.status || (day.isScheduled ? 'scheduled' : 'off-day')}`}
+              />
+            );
+          })}
         </div>
 
         <div className={styles.statsRow}>
           {stats.current > 0 && (
             <div className={styles.stat}>
               <Flame size={14} className={styles.streakIcon} />
-              <span>{stats.current} day streak</span>
+              <span>{stats.current} {streakUnit} streak</span>
             </div>
           )}
           {stats.rate > 0 && (

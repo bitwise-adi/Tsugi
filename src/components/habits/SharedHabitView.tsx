@@ -16,6 +16,7 @@ import {
   isSameMonth,
 } from 'date-fns';
 import { calculateStreak } from '@/hooks/useHabits';
+import { isHabitScheduledOnDate } from '@/lib/schedule';
 import {
   ArrowLeft,
   ChevronLeft,
@@ -43,7 +44,7 @@ interface SharedHabitViewProps {
 export default function SharedHabitView({ habit, entries, ownerName, onBack }: SharedHabitViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  const stats = useMemo(() => calculateStreak(entries), [entries]);
+  const stats = useMemo(() => calculateStreak(entries, habit), [entries, habit]);
 
   // Calendar grid
   const monthStart = startOfMonth(currentMonth);
@@ -102,8 +103,8 @@ export default function SharedHabitView({ habit, entries, ownerName, onBack }: S
 
       {/* Analytics */}
       <div className={styles.analyticsSection}>
-        <HabitHeatmap entries={entries} color={habit.color} />
-        <HabitChart entries={entries} color={habit.color} />
+        <HabitHeatmap entries={entries} color={habit.color} habit={habit} />
+        <HabitChart entries={entries} color={habit.color} habit={habit} />
       </div>
 
       {/* Month Navigation */}
@@ -143,14 +144,21 @@ export default function SharedHabitView({ habit, entries, ownerName, onBack }: S
           {daysInMonth.map(day => {
             const dateStr = format(day, 'yyyy-MM-dd');
             const entry = getEntryForDate(dateStr);
+            const isScheduled = isHabitScheduledOnDate(habit, day);
             const today = isToday(day);
             const future = isFuture(day) && !today;
             const inMonth = isSameMonth(day, currentMonth);
 
             let statusClass = '';
-            if (entry?.status === 'done') statusClass = styles.cellDone;
-            else if (entry?.status === 'missed') statusClass = styles.cellMissed;
-            else if (entry?.status === 'excused') statusClass = styles.cellExcused;
+            if (entry?.status === 'done') {
+              statusClass = isScheduled ? styles.cellDone : styles.cellBonusDone;
+            } else if (entry?.status === 'missed') {
+              statusClass = styles.cellMissed;
+            } else if (entry?.status === 'excused') {
+              statusClass = styles.cellExcused;
+            } else if (!isScheduled) {
+              statusClass = styles.cellOffDay;
+            }
 
             return (
               <div

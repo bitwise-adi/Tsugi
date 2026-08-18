@@ -7,6 +7,7 @@ import {
   deleteHabitWithOutbox,
   saveHabitEntryWithOutbox,
 } from '@/lib/outbox';
+import { isHabitScheduledOnDate } from '@/lib/schedule';
 import type { Habit, HabitEntry } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -210,56 +211,122 @@ export function useHabitEntries(habitId: string) {
 
 // --- Streak Calculation ---
 
-export function calculateStreak(entries: HabitEntry[]): { current: number; longest: number; total: number; rate: number } {
-  if (entries.length === 0) return { current: 0, longest: 0, total: 0, rate: 0 };
+export function calculateStreak(
+  entries: HabitEntry[],
+  habit?: Habit
+): { current: number; longest: number; total: number; rate: number } {
+  const doneEntries = entries.filter(e => e.status === 'done');
+  const totalDone = doneEntries.length;
 
-  const sortedDates = entries
-    .filter(e => e.status === 'done')
-    .map(e => e.date)
-    .sort()
-    .reverse();
+  if (entries.length === 0 && totalDone === 0) {
+    return { current: 0, longest: 0, total: 0, rate: 0 };
+  }
 
-  const totalDone = sortedDates.length;
-  const totalEntries = entries.length;
-  const rate = totalEntries > 0 ? Math.round((totalDone / totalEntries) * 100) : 0;
+  const doneDateSet = new Set(doneEntries.map(e => e.date));
 
-  if (sortedDates.length === 0) return { current: 0, longest: 0, total: 0, rate };
+  // If no habit is provided or habit is daily, use standard consecutive daily streak
+  if (!habit || habit.frequency === 'daily') {
+    const sortedDoneDates = Array.from(doneDateSet).sort().reverse();
+    if (sortedDoneDates.length === 0) return { current: 0, longest: 0, total: 0, rate: 0 };
 
-  // Calculate current streak
-  let current = 0;
+    const totalEntries = Math.max(entries.length, 1);
+    const rate = Math.round((totalDone / totalEntries) * 100);
+
+    let current = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const checkDate = new Date(today);
+
+    for (let i = 0; i < 365; i++) {
+      const dateStr = checkDate.toISOString().split('T')[0];
+      if (doneDateSet.has(dateStr)) {
+        current++;
+      } else if (i > 0) {
+        break;
+      }
+      checkDate.setDate(checkDate.getDate() - 1);
+    }
+
+    let longest = 0;
+    let tempStreak = 1;
+    const allSorted = Array.from(doneDateSet).sort();
+
+    for (let i = 1; i < allSorted.length; i++) {
+      const prev = new Date(allSorted[i - 1]);
+      const curr = new Date(allSorted[i]);
+      const diffDays = (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
+
+      if (diffDays === 1) {
+        tempStreak++;
+      } else {
+        longest = Math.max(longest, tempStreak);
+        tempStreak = 1;
+      }
+    }
+    longest = Math.max(longest, tempStreak);
+
+    return { current, longest, total: totalDone, rate };
+  }
+
+  // --- Schedule-Aware Streak & Rate Calculation ---
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const checkDate = new Date(today);
+  // Compute start date from habit creation or earliest entry (up to 90 days ago)
+  const createdDate = new Date(habit.createdAt || Date.now());
+  createdDate.setHours(0, 0, 0, 0);
+  const earliestDate = entries.length > 0
+    ? new Date(entries.map(e => e.date).sort()[0] + 'T00:00:00')
+    : createdDate;
+  const startDate = new Date(Math.min(createdDate.getTime(), earliestDate.getTime()));
 
-  for (let i = 0; i < 365; i++) {
-    const dateStr = checkDate.toISOString().split('T')[0];
-    if (sortedDates.includes(dateStr)) {
+  // Collect all scheduled dates from startDate to today
+  const scheduledDates: string[] = [];
+  const iterDate = new Date(startDate);
+  while (iterDate <= today) {
+    if (isHabitScheduledOnDate(habit, iterDate)) {
+      scheduledDates.push(iterDate.toISOString().split('T')[0]);
+    }
+    iterDate.setDate(iterDate.getDate() + 1);
+  }
+
+  // Rate: completed scheduled occurrences / total scheduled occurrences
+  const totalScheduled = scheduledDates.length;
+  const scheduledDoneCount = scheduledDates.filter(d => doneDateSet.has(d)).length;
+  const rate = totalScheduled > 0
+    ? Math.min(100, Math.round((Math.max(scheduledDoneCount, totalDone) / totalScheduled) * 100))
+    : (totalDone > 0 ? 100 : 0);
+
+  // Current streak on scheduled days
+  let current = 0;
+  const reversedScheduled = [...scheduledDates].reverse();
+  const todayStr = today.toISOString().split('T')[0];
+
+  for (let i = 0; i < reversedScheduled.length; i++) {
+    const dStr = reversedScheduled[i];
+    if (doneDateSet.has(dStr)) {
       current++;
-    } else if (i > 0) {
+    } else {
+      // If today is scheduled and not yet marked done, don't break streak yet
+      if (i === 0 && dStr === todayStr) {
+        continue;
+      }
       break;
     }
-    checkDate.setDate(checkDate.getDate() - 1);
   }
 
-  // Calculate longest streak
+  // Longest streak on scheduled days
   let longest = 0;
-  let tempStreak = 1;
-  const allSorted = [...sortedDates].sort();
-
-  for (let i = 1; i < allSorted.length; i++) {
-    const prev = new Date(allSorted[i - 1]);
-    const curr = new Date(allSorted[i]);
-    const diffDays = (curr.getTime() - prev.getTime()) / (1000 * 60 * 60 * 24);
-
-    if (diffDays === 1) {
-      tempStreak++;
+  let runningStreak = 0;
+  for (const dStr of scheduledDates) {
+    if (doneDateSet.has(dStr)) {
+      runningStreak++;
+      longest = Math.max(longest, runningStreak);
     } else {
-      longest = Math.max(longest, tempStreak);
-      tempStreak = 1;
+      runningStreak = 0;
     }
   }
-  longest = Math.max(longest, tempStreak);
+  longest = Math.max(longest, current);
 
   return { current, longest, total: totalDone, rate };
 }

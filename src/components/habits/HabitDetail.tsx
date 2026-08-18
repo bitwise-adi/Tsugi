@@ -34,6 +34,7 @@ import {
   Share2,
 } from 'lucide-react';
 import type { Habit, HabitStatus } from '@/types';
+import { isHabitScheduledOnDate } from '@/lib/schedule';
 import styles from './HabitDetail.module.css';
 
 interface HabitDetailProps {
@@ -58,7 +59,7 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
 
-  const stats = useMemo(() => calculateStreak(entries), [entries]);
+  const stats = useMemo(() => calculateStreak(entries, habit), [entries, habit]);
 
   // Calendar grid
   const monthStart = startOfMonth(currentMonth);
@@ -96,6 +97,7 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
   };
 
   const selectedEntry = selectedDate ? getEntryForDate(selectedDate) : null;
+  const isSelectedDateScheduled = selectedDate ? isHabitScheduledOnDate(habit, selectedDate) : true;
 
   return (
     <div className={styles.container}>
@@ -161,8 +163,8 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
 
       {/* Analytics: Heatmap + Weekly Chart */}
       <div className={styles.analyticsSection}>
-        <HabitHeatmap entries={entries} color={habit.color} />
-        <HabitChart entries={entries} color={habit.color} />
+        <HabitHeatmap entries={entries} color={habit.color} habit={habit} />
+        <HabitChart entries={entries} color={habit.color} habit={habit} />
       </div>
 
       {/* Month Navigation */}
@@ -206,15 +208,22 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
           {daysInMonth.map(day => {
             const dateStr = format(day, 'yyyy-MM-dd');
             const entry = getEntryForDate(dateStr);
+            const isScheduled = isHabitScheduledOnDate(habit, day);
             const today = isToday(day);
             const future = isFuture(day) && !today;
             const isSelected = selectedDate === dateStr;
             const inMonth = isSameMonth(day, currentMonth);
 
             let statusClass = '';
-            if (entry?.status === 'done') statusClass = styles.cellDone;
-            else if (entry?.status === 'missed') statusClass = styles.cellMissed;
-            else if (entry?.status === 'excused') statusClass = styles.cellExcused;
+            if (entry?.status === 'done') {
+              statusClass = isScheduled ? styles.cellDone : styles.cellBonusDone;
+            } else if (entry?.status === 'missed') {
+              statusClass = styles.cellMissed;
+            } else if (entry?.status === 'excused') {
+              statusClass = styles.cellExcused;
+            } else if (!isScheduled) {
+              statusClass = styles.cellOffDay;
+            }
 
             return (
               <button
@@ -230,6 +239,7 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
                 onClick={() => handleDateClick(dateStr, day)}
                 disabled={future}
                 id={`cal-${dateStr}`}
+                title={!isScheduled && !entry ? 'Off-day (click to log bonus entry)' : undefined}
               >
                 <span className={styles.dateNumber}>{format(day, 'd')}</span>
                 {entry && (
@@ -262,6 +272,12 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
                 <X size={18} />
               </button>
             </div>
+
+            {!isSelectedDateScheduled && (
+              <div className={styles.offDayBanner}>
+                <span>Off-day for this habit • Any entry logged here counts as a bonus</span>
+              </div>
+            )}
 
             {/* Status Picker */}
             <div className={styles.statusPicker}>

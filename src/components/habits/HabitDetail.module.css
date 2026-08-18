@@ -259,6 +259,34 @@
   background: rgba(245, 158, 11, 0.25);
 }
 
+.cellOffDay {
+  opacity: 0.35;
+  color: var(--text-tertiary);
+  background: transparent;
+}
+
+.cellOffDay:not(:disabled):hover {
+  opacity: 0.8;
+  background: var(--bg-input);
+}
+
+.cellBonusDone {
+  background: var(--color-done-bg);
+  color: var(--color-done);
+  border: 1px dashed var(--color-done);
+}
+
+.offDayBanner {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  background: var(--bg-input);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
+  text-align: center;
+  border: 1px dashed var(--border-default);
+}
+
 .cellToday {
   border: 2px solid var(--accent-hsl);
   font-weight: var(--font-bold);

@@ -11,7 +11,9 @@ export interface Habit {
   title: string;
   description?: string;
   frequency: HabitFrequency;
-  customDays?: number[];        // 0=Sun, 1=Mon, ..., 6=Sat
+  customDays?: number[];        // 0=Sun, 1=Mon, ..., 6=Sat (or dayOfMonth if monthly)
+  intervalWeeks?: number;       // e.g. 1 = every week, 2 = every 2 weeks, 3 = every 3 weeks
+  startDate?: string;           // 'YYYY-MM-DD' anchor date for interval calculation
   specificDates?: string[];     // ISO date strings
   color: string;                // Hex color for the habit card
   icon?: string;                // Lucide icon name

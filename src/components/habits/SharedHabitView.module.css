@@ -229,6 +229,18 @@
   color: var(--color-excused);
 }
 
+.cellOffDay {
+  opacity: 0.35;
+  color: var(--text-tertiary);
+  background: transparent;
+}
+
+.cellBonusDone {
+  background: var(--color-done-bg);
+  color: var(--color-done);
+  border: 1px dashed var(--color-done);
+}
+
 .cellToday {
   border: 2px solid var(--accent-hsl);
   font-weight: var(--font-bold);

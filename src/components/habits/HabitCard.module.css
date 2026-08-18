@@ -89,6 +89,12 @@
   background: var(--border-subtle);
 }
 
+.dot_off {
+  background: transparent;
+  border: 1px dashed var(--border-subtle);
+  opacity: 0.35;
+}
+
 .dot_done {
   background: var(--color-done);
 }
