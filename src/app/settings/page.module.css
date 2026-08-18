@@ -289,18 +289,24 @@
 .accentGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-3);
+  gap: var(--space-2-5, var(--space-2));
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .accentBtn {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-2);
   background: var(--bg-card);
   border: 2px solid var(--border-subtle);
   border-radius: var(--radius-xl);
   transition: all var(--transition-fast);
+  min-width: 0;
+  box-sizing: border-box;
+  cursor: pointer;
 }
 
 .accentBtn:hover {
@@ -314,18 +320,22 @@
 
 .accentBtnActive {
   border-color: var(--accent-hsl);
+  background: var(--accent-subtle);
 }
 
 .accentSwatch {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.125rem;
+  height: 1.125rem;
   border-radius: var(--radius-full);
   flex-shrink: 0;
 }
 
 .accentLabel {
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* --- About --- */
@@ -474,12 +484,32 @@
 
   .accentGrid {
     grid-template-columns: repeat(6, 1fr);
+    gap: var(--space-3);
+  }
+
+  .accentBtn {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .accentSwatch {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .accentLabel {
+    font-size: var(--text-sm);
   }
 }
 
 @media (max-width: 480px) {
   .exportGrid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 350px) {
+  .accentGrid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
