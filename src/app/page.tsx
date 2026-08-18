@@ -28,7 +28,13 @@ export default function HabitsPage() {
   // Load today's entries for all habits
   const today = getTodayString();
   useEffect(() => {
-    db.habitEntries.where('date').equals(today).toArray().then(setTodayEntries);
+    const loadTodayEntries = () => {
+      db.habitEntries.where('date').equals(today).toArray().then(setTodayEntries);
+    };
+    loadTodayEntries();
+
+    window.addEventListener('tsugi:data-synced', loadTodayEntries);
+    return () => window.removeEventListener('tsugi:data-synced', loadTodayEntries);
   }, [habits, today]);
 
   // --- URL Hash Navigation for HabitDetail ---
@@ -63,7 +69,7 @@ export default function HabitsPage() {
       const habitId = window.location.hash.replace('#habit-', '');
       const habit = habits.find(h => h.id === habitId);
       if (habit) {
-        setSelectedHabit(habit);
+        queueMicrotask(() => setSelectedHabit(habit));
       }
     }
   }, [loading, habits]);

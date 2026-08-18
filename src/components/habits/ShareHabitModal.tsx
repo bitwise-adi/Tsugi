@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { createShareCode, getMyShares, revokeShare } from '@/lib/sharing';
 import { Copy, Check, Share2, UserMinus, Loader2, Link2 } from 'lucide-react';
@@ -20,22 +20,27 @@ export default function ShareHabitModal({ habit, onClose }: ShareHabitModalProps
   const [copied, setCopied] = useState(false);
   const [revoking, setRevoking] = useState<string | null>(null);
 
-  const loadShares = useCallback(async () => {
-    if (!user) return;
-    setLoading(true);
-    try {
-      const myShares = await getMyShares(user.uid, habit.id);
-      setShares(myShares);
-    } catch (err) {
-      console.error('Failed to load shares:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [user, habit.id]);
-
   useEffect(() => {
-    loadShares();
-  }, [loadShares]);
+    let cancelled = false;
+    if (user) {
+      getMyShares(user.uid, habit.id)
+        .then((myShares) => {
+          if (!cancelled) {
+            setShares(myShares);
+            setLoading(false);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to load shares:', err);
+          if (!cancelled) setLoading(false);
+        });
+    } else {
+      queueMicrotask(() => setLoading(false));
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [user, habit.id]);
 
   const activeShare = shares.find(s => s.status === 'active');
 

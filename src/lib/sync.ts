@@ -4,7 +4,6 @@ import {
   collection,
   doc,
   setDoc,
-  deleteDoc,
   getDocs,
   query,
   where,
@@ -12,12 +11,13 @@ import {
 } from 'firebase/firestore';
 import { firestore } from './firebase';
 import { db } from './db';
-import type { Habit, HabitEntry, Task } from '@/types';
+import type { Habit, HabitEntry, Task, SyncOutboxItem } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
 
 // Firestore does not accept 'undefined' for any field value.
 // Strip undefined fields before writing to Firestore.
-function removeUndefinedFields<T extends Record<string, any>>(obj: T): T {
-  const result: Record<string, any> = {};
+function removeUndefinedFields<T extends Record<string, unknown>>(obj: T): T {
+  const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
     if (value !== undefined) {
       result[key] = value;
@@ -26,109 +26,309 @@ function removeUndefinedFields<T extends Record<string, any>>(obj: T): T {
   return result as T;
 }
 
-// Upload all local data to Firestore for a user
-export async function pushLocalToCloud(userId: string): Promise<void> {
-  const batch = writeBatch(firestore);
-
-  // Push habits
-  const habits = await db.habits.toArray();
-  for (const habit of habits) {
-    const ref = doc(firestore, 'users', userId, 'habits', habit.id);
-    batch.set(ref, removeUndefinedFields({ ...habit, userId }));
-  }
-
-  // Push habit entries
-  const entries = await db.habitEntries.toArray();
-  for (const entry of entries) {
-    const ref = doc(firestore, 'users', userId, 'habitEntries', entry.id);
-    batch.set(ref, removeUndefinedFields({ ...entry, userId }));
-  }
-
-  // Push tasks
-  const tasks = await db.tasks.toArray();
-  for (const task of tasks) {
-    const ref = doc(firestore, 'users', userId, 'tasks', task.id);
-    batch.set(ref, removeUndefinedFields({ ...task, userId }));
-  }
-
-  await batch.commit();
+// Get the count of pending outbox items
+export async function getPendingOutboxCount(): Promise<number> {
+  return await db.syncOutbox.count();
 }
 
-// Pull cloud data into local DB (merge — cloud wins on conflicts)
+// Bootstrap local IndexedDB data into syncOutbox if local records exist but outbox is empty
+export async function bootstrapLocalDataToOutbox(): Promise<void> {
+  const outboxCount = await db.syncOutbox.count();
+  if (outboxCount > 0) return;
+
+  const now = new Date().toISOString();
+  const [habits, entries, tasks] = await Promise.all([
+    db.habits.toArray(),
+    db.habitEntries.toArray(),
+    db.tasks.toArray(),
+  ]);
+
+  const items: SyncOutboxItem[] = [];
+
+  for (const h of habits) {
+    items.push({
+      id: uuidv4(),
+      entityType: 'habit',
+      entityId: h.id,
+      operation: 'upsert',
+      payload: h as unknown as Record<string, unknown>,
+      clientUpdatedAt: h.updatedAt || now,
+      attemptCount: 0,
+      createdAt: now,
+    });
+  }
+
+  for (const e of entries) {
+    items.push({
+      id: uuidv4(),
+      entityType: 'habitEntry',
+      entityId: e.id,
+      operation: 'upsert',
+      payload: e as unknown as Record<string, unknown>,
+      clientUpdatedAt: e.updatedAt || now,
+      attemptCount: 0,
+      createdAt: now,
+    });
+  }
+
+  for (const t of tasks) {
+    items.push({
+      id: uuidv4(),
+      entityType: 'task',
+      entityId: t.id,
+      operation: 'upsert',
+      payload: t as unknown as Record<string, unknown>,
+      clientUpdatedAt: t.updatedAt || now,
+      attemptCount: 0,
+      createdAt: now,
+    });
+  }
+
+  if (items.length > 0) {
+    await db.syncOutbox.bulkAdd(items);
+  }
+}
+
+// Flush pending mutations from IndexedDB outbox to Firestore
+export async function flushOutbox(userId: string): Promise<void> {
+  const pendingItems = await db.syncOutbox.orderBy('createdAt').toArray();
+  if (pendingItems.length === 0) return;
+
+  for (const item of pendingItems) {
+    try {
+      if (item.operation === 'upsert' && item.payload) {
+        if (item.entityType === 'habit') {
+          const ref = doc(firestore, 'users', userId, 'habits', item.entityId);
+          await setDoc(ref, removeUndefinedFields({ ...item.payload, userId, deletedAt: null }), { merge: true });
+        } else if (item.entityType === 'habitEntry') {
+          const ref = doc(firestore, 'users', userId, 'habitEntries', item.entityId);
+          await setDoc(ref, removeUndefinedFields({ ...item.payload, userId, deletedAt: null }), { merge: true });
+        } else if (item.entityType === 'task') {
+          const ref = doc(firestore, 'users', userId, 'tasks', item.entityId);
+          await setDoc(ref, removeUndefinedFields({ ...item.payload, userId, deletedAt: null }), { merge: true });
+        }
+      } else if (item.operation === 'delete') {
+        if (item.entityType === 'habit') {
+          // Soft-delete habit in Firestore with deletedAt timestamp
+          const habitRef = doc(firestore, 'users', userId, 'habits', item.entityId);
+          await setDoc(habitRef, {
+            deletedAt: item.clientUpdatedAt,
+            updatedAt: item.clientUpdatedAt,
+            userId,
+          }, { merge: true });
+
+          // Also mark associated entries in Firestore as deleted
+          const entriesSnap = await getDocs(
+            query(collection(firestore, 'users', userId, 'habitEntries'), where('habitId', '==', item.entityId))
+          );
+          if (!entriesSnap.empty) {
+            const batch = writeBatch(firestore);
+            entriesSnap.forEach((entryDoc) => {
+              batch.set(entryDoc.ref, {
+                deletedAt: item.clientUpdatedAt,
+                updatedAt: item.clientUpdatedAt,
+                userId,
+              }, { merge: true });
+            });
+            await batch.commit();
+          }
+        } else if (item.entityType === 'habitEntry') {
+          const entryRef = doc(firestore, 'users', userId, 'habitEntries', item.entityId);
+          await setDoc(entryRef, {
+            deletedAt: item.clientUpdatedAt,
+            updatedAt: item.clientUpdatedAt,
+            userId,
+          }, { merge: true });
+        } else if (item.entityType === 'task') {
+          const taskRef = doc(firestore, 'users', userId, 'tasks', item.entityId);
+          await setDoc(taskRef, {
+            deletedAt: item.clientUpdatedAt,
+            updatedAt: item.clientUpdatedAt,
+            userId,
+          }, { merge: true });
+        }
+      }
+
+      // Successfully processed — remove from outbox
+      await db.syncOutbox.delete(item.id);
+    } catch (err) {
+      console.error(`Outbox sync failed for ${item.entityType} ${item.entityId}:`, err);
+      await db.syncOutbox.update(item.id, {
+        attemptCount: item.attemptCount + 1,
+        lastError: err instanceof Error ? err.message : String(err),
+      });
+      // Stop sequential batch processing on error to maintain order
+      throw err;
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('tsugi:outbox-changed'));
+  }
+}
+
+// Pull cloud data into local DB with tombstone and conflict protection
 export async function pullCloudToLocal(userId: string): Promise<void> {
-  // Pull habits
+  let hasLocalChanges = false;
+
+  // 1. Pull Habits
   const habitsSnap = await getDocs(
     query(collection(firestore, 'users', userId, 'habits'))
   );
   for (const docSnap of habitsSnap.docs) {
-    const data = docSnap.data() as Habit & { userId: string };
-    const { userId: _uid, ...habit } = data;
-    const local = await db.habits.get(habit.id);
-    if (!local || habit.updatedAt > local.updatedAt) {
-      await db.habits.put(habit);
+    const remoteHabit = { ...docSnap.data() } as Habit & { userId?: string };
+    delete remoteHabit.userId;
+    const habitId = docSnap.id;
+
+    // A. If marked as deleted in Firestore
+    if (remoteHabit.deletedAt) {
+      const local = await db.habits.get(habitId);
+      if (local) {
+        await db.habits.delete(habitId);
+        await db.habitEntries.where('habitId').equals(habitId).delete();
+        hasLocalChanges = true;
+      }
+      await db.deletedEntities.put({
+        id: habitId,
+        entityType: 'habit',
+        deletedAt: remoteHabit.deletedAt,
+      });
+      continue;
+    }
+
+    // B. Check if deleted locally with a newer or equal timestamp
+    const tombstone = await db.deletedEntities.get(habitId);
+    if (tombstone && tombstone.deletedAt >= (remoteHabit.updatedAt || '')) {
+      // Local delete takes precedence — do not resurrect
+      continue;
+    }
+
+    // C. Check if local outbox has pending unsynced changes for this habit
+    const pendingOutbox = await db.syncOutbox.where('entityId').equals(habitId).first();
+    if (pendingOutbox) {
+      // Local in-flight mutation takes precedence
+      continue;
+    }
+
+    // D. Merge active habit
+    const local = await db.habits.get(habitId);
+    if (!local) {
+      await db.habits.put({ ...remoteHabit, id: habitId });
+      hasLocalChanges = true;
+    } else if ((remoteHabit.updatedAt || '') > (local.updatedAt || '')) {
+      await db.habits.put({ ...remoteHabit, id: habitId });
+      hasLocalChanges = true;
     }
   }
 
-  // Pull habit entries
+  // 2. Pull Habit Entries
   const entriesSnap = await getDocs(
     query(collection(firestore, 'users', userId, 'habitEntries'))
   );
   for (const docSnap of entriesSnap.docs) {
-    const data = docSnap.data() as HabitEntry & { userId: string };
-    const { userId: _uid, ...entry } = data;
-    const local = await db.habitEntries.get(entry.id);
-    if (!local || entry.updatedAt > local.updatedAt) {
-      await db.habitEntries.put(entry);
+    const remoteEntry = { ...docSnap.data() } as HabitEntry & { userId?: string };
+    delete remoteEntry.userId;
+    const entryId = docSnap.id;
+
+    if (remoteEntry.deletedAt) {
+      const local = await db.habitEntries.get(entryId);
+      if (local) {
+        await db.habitEntries.delete(entryId);
+        hasLocalChanges = true;
+      }
+      await db.deletedEntities.put({
+        id: entryId,
+        entityType: 'habitEntry',
+        deletedAt: remoteEntry.deletedAt,
+      });
+      continue;
+    }
+
+    const tombstone = await db.deletedEntities.get(entryId);
+    if (tombstone && tombstone.deletedAt >= (remoteEntry.updatedAt || '')) {
+      continue;
+    }
+
+    const pendingOutbox = await db.syncOutbox.where('entityId').equals(entryId).first();
+    if (pendingOutbox) {
+      continue;
+    }
+
+    const local = await db.habitEntries.get(entryId);
+    if (!local) {
+      await db.habitEntries.put({ ...remoteEntry, id: entryId });
+      hasLocalChanges = true;
+    } else if ((remoteEntry.updatedAt || '') > (local.updatedAt || '')) {
+      await db.habitEntries.put({ ...remoteEntry, id: entryId });
+      hasLocalChanges = true;
     }
   }
 
-  // Pull tasks
+  // 3. Pull Tasks
   const tasksSnap = await getDocs(
     query(collection(firestore, 'users', userId, 'tasks'))
   );
   for (const docSnap of tasksSnap.docs) {
-    const data = docSnap.data() as Task & { userId: string };
-    const { userId: _uid, ...task } = data;
-    const local = await db.tasks.get(task.id);
-    if (!local || task.updatedAt > local.updatedAt) {
-      await db.tasks.put(task);
+    const remoteTask = { ...docSnap.data() } as Task & { userId?: string };
+    delete remoteTask.userId;
+    const taskId = docSnap.id;
+
+    if (remoteTask.deletedAt) {
+      const local = await db.tasks.get(taskId);
+      if (local) {
+        await db.tasks.delete(taskId);
+        hasLocalChanges = true;
+      }
+      await db.deletedEntities.put({
+        id: taskId,
+        entityType: 'task',
+        deletedAt: remoteTask.deletedAt,
+      });
+      continue;
     }
+
+    const tombstone = await db.deletedEntities.get(taskId);
+    if (tombstone && tombstone.deletedAt >= (remoteTask.updatedAt || '')) {
+      continue;
+    }
+
+    const pendingOutbox = await db.syncOutbox.where('entityId').equals(taskId).first();
+    if (pendingOutbox) {
+      continue;
+    }
+
+    const local = await db.tasks.get(taskId);
+    if (!local) {
+      await db.tasks.put({ ...remoteTask, id: taskId });
+      hasLocalChanges = true;
+    } else if ((remoteTask.updatedAt || '') > (local.updatedAt || '')) {
+      await db.tasks.put({ ...remoteTask, id: taskId });
+      hasLocalChanges = true;
+    }
+  }
+
+  // Clean up tombstones older than 30 days to keep DB lean
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  await db.deletedEntities.where('deletedAt').below(thirtyDaysAgo).delete();
+
+  if (hasLocalChanges && typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('tsugi:data-synced'));
   }
 }
 
-// Full sync: push local then pull cloud (last-write-wins)
+// Full sync: flush local outbox first, then pull remote updates
 export async function syncData(userId: string): Promise<void> {
-  await pushLocalToCloud(userId);
+  // Ensure existing local data is enqueued if this is first sync
+  await bootstrapLocalDataToOutbox();
+
+  // 1. Flush local outbox mutations to Firestore
+  await flushOutbox(userId);
+
+  // 2. Pull remote changes to local IndexedDB
   await pullCloudToLocal(userId);
-}
 
-// Save a single item to Firestore
-export async function syncHabit(userId: string, habit: Habit): Promise<void> {
-  const ref = doc(firestore, 'users', userId, 'habits', habit.id);
-  await setDoc(ref, removeUndefinedFields({ ...habit, userId }));
-}
-
-export async function syncHabitEntry(userId: string, entry: HabitEntry): Promise<void> {
-  const ref = doc(firestore, 'users', userId, 'habitEntries', entry.id);
-  await setDoc(ref, removeUndefinedFields({ ...entry, userId }));
-}
-
-export async function syncTask(userId: string, task: Task): Promise<void> {
-  const ref = doc(firestore, 'users', userId, 'tasks', task.id);
-  await setDoc(ref, removeUndefinedFields({ ...task, userId }));
-}
-
-export async function deleteSyncedHabit(userId: string, habitId: string): Promise<void> {
-  await deleteDoc(doc(firestore, 'users', userId, 'habits', habitId));
-  // Also delete associated entries
-  const entriesSnap = await getDocs(
-    query(collection(firestore, 'users', userId, 'habitEntries'), where('habitId', '==', habitId))
-  );
-  const batch = writeBatch(firestore);
-  entriesSnap.forEach(d => batch.delete(d.ref));
-  if (!entriesSnap.empty) await batch.commit();
-}
-
-export async function deleteSyncedTask(userId: string, taskId: string): Promise<void> {
-  await deleteDoc(doc(firestore, 'users', userId, 'tasks', taskId));
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('tsugi:data-synced'));
+    window.dispatchEvent(new CustomEvent('tsugi:outbox-changed'));
+  }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTheme } from '@/components/ThemeProvider';
 import { useAuth } from '@/components/AuthProvider';
 import { Sun, Moon, Monitor, Palette, Bell, BellOff, Download, User, LogOut, RefreshCw, Database } from 'lucide-react';
@@ -26,13 +26,20 @@ const ACCENT_OPTIONS: { value: AccentColor; label: string; color: string }[] = [
 
 export default function SettingsPage() {
   const { theme, accentColor, setTheme, setAccentColor } = useTheme();
-  const { user, loading: authLoading, syncing, logout, triggerSync } = useAuth();
-  const [notifPermission, setNotifPermission] = useState<NotificationPermission | null>(null);
+  const {
+    user,
+    loading: authLoading,
+    syncing,
+    syncStatus,
+    lastSyncedAt,
+    pendingOutboxCount,
+    logout,
+    triggerSync,
+  } = useAuth();
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission | null>(() => {
+    return typeof window !== 'undefined' ? getNotificationPermission() : null;
+  });
   const [exporting, setExporting] = useState(false);
-
-  useEffect(() => {
-    setNotifPermission(getNotificationPermission());
-  }, []);
 
   const handleEnableNotifications = async () => {
     const granted = await requestNotificationPermission();
@@ -62,7 +69,7 @@ export default function SettingsPage() {
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
             <User size={18} className={styles.sectionIcon} />
-            <h2 className={styles.sectionTitle}>Account</h2>
+            <h2 className={styles.sectionTitle}>Account &amp; Sync</h2>
           </div>
           {user ? (
             <div className={styles.accountCard}>
@@ -80,6 +87,38 @@ export default function SettingsPage() {
                   <p className={styles.accountEmail}>{user.email}</p>
                 </div>
               </div>
+
+              {/* Sync Status Banner */}
+              <div className={styles.syncStatusBanner}>
+                <div className={styles.syncStatusIndicator}>
+                  <span
+                    className={`${styles.syncDot} ${
+                      syncStatus === 'synced'
+                        ? styles.syncDotGreen
+                        : syncStatus === 'syncing'
+                        ? styles.syncDotBlue
+                        : syncStatus === 'pending'
+                        ? styles.syncDotAmber
+                        : styles.syncDotRed
+                    }`}
+                  />
+                  <span className={styles.syncStatusLabel}>
+                    {syncStatus === 'synced'
+                      ? 'Saved locally & synced with cloud'
+                      : syncStatus === 'syncing'
+                      ? 'Syncing changes...'
+                      : syncStatus === 'pending'
+                      ? `${pendingOutboxCount} change${pendingOutboxCount !== 1 ? 's' : ''} queued offline`
+                      : 'Sync failed (will auto-retry)'}
+                  </span>
+                </div>
+                {lastSyncedAt && syncStatus === 'synced' && (
+                  <span className={styles.lastSyncTime}>
+                    Last synced {lastSyncedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
+              </div>
+
               <div className={styles.accountActions}>
                 <button
                   className={styles.syncBtn}
@@ -98,8 +137,16 @@ export default function SettingsPage() {
             </div>
           ) : (
             <div className={styles.accountCard}>
-              <p className={styles.notSignedIn}>Not signed in — data is stored locally on this device.</p>
-              <a href="/auth" className={styles.signInLink}>Sign in to sync across devices →</a>
+              <div className={styles.syncStatusBanner}>
+                <div className={styles.syncStatusIndicator}>
+                  <span className={`${styles.syncDot} ${styles.syncDotGreen}`} />
+                  <span className={styles.syncStatusLabel}>Local-First Storage Active</span>
+                </div>
+              </div>
+              <p className={styles.notSignedIn}>
+                Not signed in — all your habits and tasks are saved securely on this device in IndexedDB.
+              </p>
+              <a href="/auth" className={styles.signInLink}>Sign in to sync across devices &rarr;</a>
             </div>
           )}
         </section>

@@ -1,11 +1,13 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { Habit, HabitEntry, Task, UserPreferences } from '@/types';
+import type { Habit, HabitEntry, Task, UserPreferences, SyncOutboxItem, DeletedEntity } from '@/types';
 
 const db = new Dexie('TsugiDB') as Dexie & {
   habits: EntityTable<Habit, 'id'>;
   habitEntries: EntityTable<HabitEntry, 'id'>;
   tasks: EntityTable<Task, 'id'>;
   preferences: EntityTable<UserPreferences, 'id'>;
+  syncOutbox: EntityTable<SyncOutboxItem, 'id'>;
+  deletedEntities: EntityTable<DeletedEntity, 'id'>;
 };
 
 db.version(1).stores({
@@ -13,6 +15,15 @@ db.version(1).stores({
   habitEntries: 'id, habitId, date, status, [habitId+date]',
   tasks: 'id, date, completed, priority, [date+completed]',
   preferences: 'id',
+});
+
+db.version(2).stores({
+  habits: 'id, title, frequency, createdAt, updatedAt',
+  habitEntries: 'id, habitId, date, status, [habitId+date], updatedAt',
+  tasks: 'id, date, completed, priority, [date+completed], updatedAt',
+  preferences: 'id',
+  syncOutbox: 'id, entityType, entityId, createdAt, attemptCount',
+  deletedEntities: 'id, entityType, deletedAt',
 });
 
 // Automatic one-time migration from legacy LocoMeDB if present

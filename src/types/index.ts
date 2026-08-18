@@ -17,6 +17,7 @@ export interface Habit {
   icon?: string;                // Lucide icon name
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string | null;
 }
 
 export interface HabitEntry {
@@ -28,6 +29,7 @@ export interface HabitEntry {
   photoUrl?: string;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string | null;
 }
 
 export interface Task {
@@ -43,6 +45,7 @@ export interface Task {
   reminderEnabled: boolean;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string | null;
 }
 
 export interface UserPreferences {
@@ -50,6 +53,30 @@ export interface UserPreferences {
   theme: ThemeMode;
   accentColor: AccentColor;
   updatedAt: string;
+}
+
+// --- Sync & Outbox ---
+
+export type SyncEntityType = 'habit' | 'habitEntry' | 'task';
+export type SyncOperation = 'upsert' | 'delete';
+export type SyncStatus = 'synced' | 'syncing' | 'pending' | 'error';
+
+export interface SyncOutboxItem {
+  id: string;                      // UUID
+  entityType: SyncEntityType;
+  entityId: string;
+  operation: SyncOperation;
+  payload?: Record<string, unknown> | null; // Record snapshot for upsert
+  clientUpdatedAt: string;         // ISO timestamp
+  attemptCount: number;
+  lastError?: string;
+  createdAt: string;
+}
+
+export interface DeletedEntity {
+  id: string;                      // entityId
+  entityType: SyncEntityType;
+  deletedAt: string;               // ISO timestamp
 }
 
 // --- Sharing ---

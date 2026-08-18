@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { db } from '@/lib/db';
+import { saveTaskWithOutbox, deleteTaskWithOutbox } from '@/lib/outbox';
 import { scheduleTaskReminder, cancelTaskReminder } from '@/lib/notifications';
 import type { Task } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
@@ -53,8 +54,57 @@ export function useTasks(dateFilter?: string) {
   }, [dateFilter]);
 
   useEffect(() => {
-    loadTasks();
-  }, [loadTasks]);
+    let cancelled = false;
+
+    const fetchTasks = async () => {
+      try {
+        let result: Task[];
+        if (dateFilter) {
+          result = await db.tasks
+            .where('date')
+            .equals(dateFilter)
+            .toArray();
+        } else {
+          result = await db.tasks.orderBy('date').toArray();
+        }
+        const priorityOrder = { high: 0, medium: 1, low: 2 };
+        result.sort((a, b) => {
+          if (a.completed !== b.completed) return a.completed ? 1 : -1;
+          if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
+            return priorityOrder[a.priority] - priorityOrder[b.priority];
+          }
+          if (a.time && !b.time) return -1;
+          if (!a.time && b.time) return 1;
+          if (a.time && b.time) return a.time.localeCompare(b.time);
+          return a.createdAt.localeCompare(b.createdAt);
+        });
+        if (!cancelled) {
+          setTasks(result);
+          setLoading(false);
+        }
+        result.forEach(t => {
+          if (t.reminderEnabled && t.time && !t.completed) {
+            scheduleTaskReminder(t.id, t.title, t.date, t.time);
+          }
+        });
+      } catch (err) {
+        console.error('Failed to load tasks:', err);
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    fetchTasks();
+
+    const handleSynced = () => {
+      fetchTasks();
+    };
+
+    window.addEventListener('tsugi:data-synced', handleSynced);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('tsugi:data-synced', handleSynced);
+    };
+  }, [dateFilter]);
 
   const addTask = useCallback(async (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date().toISOString();
@@ -64,7 +114,7 @@ export function useTasks(dateFilter?: string) {
       createdAt: now,
       updatedAt: now,
     };
-    await db.tasks.add(newTask);
+    await saveTaskWithOutbox(newTask);
     if (newTask.reminderEnabled && newTask.time) {
       scheduleTaskReminder(newTask.id, newTask.title, newTask.date, newTask.time);
     }
@@ -84,10 +134,16 @@ export function useTasks(dateFilter?: string) {
   }, []);
 
   const updateTask = useCallback(async (id: string, updates: Partial<Task>) => {
-    const updatedFields = { ...updates, updatedAt: new Date().toISOString() };
-    await db.tasks.update(id, updatedFields);
+    const current = await db.tasks.get(id);
+    if (!current) return;
+    const updatedTask: Task = {
+      ...current,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    await saveTaskWithOutbox(updatedTask);
     setTasks(prev => {
-      const updated = prev.map(t => t.id === id ? { ...t, ...updatedFields } : t);
+      const updated = prev.map(t => t.id === id ? updatedTask : t);
       const priorityOrder = { high: 0, medium: 1, low: 2 };
       updated.sort((a, b) => {
         if (a.completed !== b.completed) return a.completed ? 1 : -1;
@@ -103,13 +159,14 @@ export function useTasks(dateFilter?: string) {
   const toggleComplete = useCallback(async (id: string) => {
     const task = await db.tasks.get(id);
     if (!task) return;
-    const updatedFields = {
+    const updatedTask: Task = {
+      ...task,
       completed: !task.completed,
       updatedAt: new Date().toISOString(),
     };
-    await db.tasks.update(id, updatedFields);
+    await saveTaskWithOutbox(updatedTask);
     setTasks(prev => {
-      const updated = prev.map(t => t.id === id ? { ...t, ...updatedFields } : t);
+      const updated = prev.map(t => t.id === id ? updatedTask : t);
       const priorityOrder = { high: 0, medium: 1, low: 2 };
       updated.sort((a, b) => {
         if (a.completed !== b.completed) return a.completed ? 1 : -1;
@@ -124,7 +181,7 @@ export function useTasks(dateFilter?: string) {
 
   const deleteTask = useCallback(async (id: string) => {
     cancelTaskReminder(id);
-    await db.tasks.delete(id);
+    await deleteTaskWithOutbox(id);
     setTasks(prev => prev.filter(t => t.id !== id));
   }, []);
 

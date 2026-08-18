@@ -26,6 +26,12 @@ export default function HabitCard({ habit, onClick }: HabitCardProps) {
       setStats(calculateStreak(allEntries));
     };
     load();
+
+    const handleSynced = () => {
+      load();
+    };
+    window.addEventListener('tsugi:data-synced', handleSynced);
+    return () => window.removeEventListener('tsugi:data-synced', handleSynced);
   }, [habit.id]);
 
   // Get last 7 days status for mini preview

@@ -2,6 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { db } from '@/lib/db';
+import {
+  saveHabitWithOutbox,
+  deleteHabitWithOutbox,
+  saveHabitEntryWithOutbox,
+} from '@/lib/outbox';
 import type { Habit, HabitEntry } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -23,8 +28,38 @@ export function useHabits() {
   }, []);
 
   useEffect(() => {
-    loadHabits();
-  }, [loadHabits]);
+    let cancelled = false;
+    db.habits
+      .orderBy('createdAt')
+      .reverse()
+      .toArray()
+      .then((allHabits) => {
+        if (!cancelled) {
+          setHabits(allHabits);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load habits:', err);
+        if (!cancelled) setLoading(false);
+      });
+
+    const handleSynced = () => {
+      db.habits
+        .orderBy('createdAt')
+        .reverse()
+        .toArray()
+        .then((allHabits) => {
+          if (!cancelled) setHabits(allHabits);
+        });
+    };
+
+    window.addEventListener('tsugi:data-synced', handleSynced);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('tsugi:data-synced', handleSynced);
+    };
+  }, []);
 
   const addHabit = useCallback(async (habit: Omit<Habit, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date().toISOString();
@@ -34,20 +69,25 @@ export function useHabits() {
       createdAt: now,
       updatedAt: now,
     };
-    await db.habits.add(newHabit);
+    await saveHabitWithOutbox(newHabit);
     setHabits(prev => [newHabit, ...prev]);
     return newHabit;
   }, []);
 
   const updateHabit = useCallback(async (id: string, updates: Partial<Habit>) => {
-    const updatedFields = { ...updates, updatedAt: new Date().toISOString() };
-    await db.habits.update(id, updatedFields);
-    setHabits(prev => prev.map(h => h.id === id ? { ...h, ...updatedFields } : h));
+    const current = await db.habits.get(id);
+    if (!current) return;
+    const updatedHabit: Habit = {
+      ...current,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    await saveHabitWithOutbox(updatedHabit);
+    setHabits(prev => prev.map(h => h.id === id ? updatedHabit : h));
   }, []);
 
   const deleteHabit = useCallback(async (id: string) => {
-    await db.habits.delete(id);
-    await db.habitEntries.where('habitId').equals(id).delete();
+    await deleteHabitWithOutbox(id);
     setHabits(prev => prev.filter(h => h.id !== id));
   }, []);
 
@@ -75,8 +115,38 @@ export function useHabitEntries(habitId: string) {
   }, [habitId]);
 
   useEffect(() => {
-    loadEntries();
-  }, [loadEntries]);
+    let cancelled = false;
+    db.habitEntries
+      .where('habitId')
+      .equals(habitId)
+      .toArray()
+      .then((allEntries) => {
+        if (!cancelled) {
+          setEntries(allEntries);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load entries:', err);
+        if (!cancelled) setLoading(false);
+      });
+
+    const handleSynced = () => {
+      db.habitEntries
+        .where('habitId')
+        .equals(habitId)
+        .toArray()
+        .then((allEntries) => {
+          if (!cancelled) setEntries(allEntries);
+        });
+    };
+
+    window.addEventListener('tsugi:data-synced', handleSynced);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('tsugi:data-synced', handleSynced);
+    };
+  }, [habitId]);
 
   const setEntry = useCallback(async (
     date: string,
@@ -91,8 +161,13 @@ export function useHabitEntries(habitId: string) {
     const now = new Date().toISOString();
 
     if (existing) {
-      const updated = { ...existing, status, note: note ?? existing.note, updatedAt: now };
-      await db.habitEntries.update(existing.id, updated);
+      const updated: HabitEntry = {
+        ...existing,
+        status,
+        note: note !== undefined ? note : existing.note,
+        updatedAt: now,
+      };
+      await saveHabitEntryWithOutbox(updated);
       setEntries(prev => prev.map(e => e.id === existing.id ? updated : e));
     } else {
       const newEntry: HabitEntry = {
@@ -104,7 +179,7 @@ export function useHabitEntries(habitId: string) {
         createdAt: now,
         updatedAt: now,
       };
-      await db.habitEntries.add(newEntry);
+      await saveHabitEntryWithOutbox(newEntry);
       setEntries(prev => [...prev, newEntry]);
     }
   }, [habitId]);
@@ -116,8 +191,13 @@ export function useHabitEntries(habitId: string) {
       .first();
 
     if (existing) {
-      await db.habitEntries.update(existing.id, { note, updatedAt: new Date().toISOString() });
-      setEntries(prev => prev.map(e => e.id === existing.id ? { ...e, note } : e));
+      const updated: HabitEntry = {
+        ...existing,
+        note,
+        updatedAt: new Date().toISOString(),
+      };
+      await saveHabitEntryWithOutbox(updated);
+      setEntries(prev => prev.map(e => e.id === existing.id ? updated : e));
     }
   }, [habitId]);
 

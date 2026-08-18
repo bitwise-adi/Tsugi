@@ -69,12 +69,30 @@ export default function SharedPage() {
   }, [user]);
 
   useEffect(() => {
+    let cancelled = false;
     if (user) {
-      loadShares();
+      Promise.all([
+        getSharedWithMe(user.uid),
+        getSharedByMe(user.uid),
+      ])
+        .then(([withMe, byMe]) => {
+          if (!cancelled) {
+            setSharedWithMe(withMe);
+            setSharedByMe(byMe);
+            setLoading(false);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to load shared habits:', err);
+          if (!cancelled) setLoading(false);
+        });
     } else {
-      setLoading(false);
+      queueMicrotask(() => setLoading(false));
     }
-  }, [user, loadShares]);
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const handleClaim = async () => {
     if (!user || !codeInput.trim()) return;
