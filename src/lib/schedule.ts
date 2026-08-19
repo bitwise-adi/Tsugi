@@ -1,4 +1,4 @@
-import { format, eachDayOfInterval, differenceInCalendarWeeks } from 'date-fns';
+import { format, differenceInCalendarWeeks } from 'date-fns';
 import type { Habit } from '@/types';
 
 export const DAY_NAMES_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -80,21 +80,6 @@ export function isHabitScheduledOnDate(habit: Habit, targetDate: Date | string):
     default:
       return true;
   }
-}
-
-/**
- * Returns the number of scheduled occurrences for a habit within a date range (inclusive).
- */
-export function getScheduledCountInInterval(habit: Habit, start: Date, end: Date): number {
-  if (start > end) return 0;
-  const days = eachDayOfInterval({ start, end });
-  let count = 0;
-  for (const day of days) {
-    if (isHabitScheduledOnDate(habit, day)) {
-      count++;
-    }
-  }
-  return count;
 }
 
 /**

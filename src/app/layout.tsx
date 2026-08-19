@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 import { AuthProvider } from '@/components/AuthProvider';
 import TabBar from '@/components/layout/TabBar';
 import SplashScreen from '@/components/layout/SplashScreen';
+import ErrorBoundary from '@/components/layout/ErrorBoundary';
 import './globals.css';
 
 const inter = Inter({
@@ -56,18 +57,20 @@ export default function RootLayout({
     <html lang="en" data-theme="dark" data-accent="purple" className={inter.className}>
       <body>
         <SplashScreen />
-        <ThemeProvider>
-          <AuthProvider>
-            <main style={{
-              paddingBottom: 'calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px) + var(--space-8))',
-              paddingTop: '0',
-              minHeight: '100dvh',
-            }}>
-              {children}
-            </main>
-            <TabBar />
-          </AuthProvider>
-        </ThemeProvider>
+        <ErrorBoundary>
+          <ThemeProvider>
+            <AuthProvider>
+              <main style={{
+                paddingBottom: 'calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px) + var(--space-8))',
+                paddingTop: '0',
+                minHeight: '100dvh',
+              }}>
+                {children}
+              </main>
+              <TabBar />
+            </AuthProvider>
+          </ThemeProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

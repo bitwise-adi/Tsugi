@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import styles from './SplashScreen.module.css';
 
 export default function SplashScreen() {
@@ -45,12 +46,13 @@ export default function SplashScreen() {
       <div className={`${styles.content} ${isContentHidden ? styles.fadeOutContent : ''}`}>
         <div className={styles.logoWrapper}>
           <div className={styles.ambientGlow} />
-          <img
+          <Image
             src="/icon.svg"
             alt="Tsugi(t) Logo"
             className={styles.logoSvg}
             width={96}
             height={96}
+            priority
           />
         </div>
 

@@ -8,40 +8,47 @@ import type { Task } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 
+const PRIORITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 };
+
+/**
+ * Deterministically sorts tasks:
+ * 1. Incomplete before completed
+ * 2. High priority > Medium > Low
+ * 3. Timed tasks first (chronological)
+ * 4. Created timestamp
+ */
+export function sortTasks(tasks: Task[]): Task[] {
+  return [...tasks].sort((a, b) => {
+    if (a.completed !== b.completed) return a.completed ? 1 : -1;
+    const pA = PRIORITY_ORDER[a.priority] ?? 1;
+    const pB = PRIORITY_ORDER[b.priority] ?? 1;
+    if (pA !== pB) return pA - pB;
+    if (a.time && !b.time) return -1;
+    if (!a.time && b.time) return 1;
+    if (a.time && b.time) return a.time.localeCompare(b.time);
+    return a.createdAt.localeCompare(b.createdAt);
+  });
+}
+
 export function useTasks(dateFilter?: string) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const queryTasks = useCallback(async (): Promise<Task[]> => {
+    let raw: Task[];
+    if (dateFilter) {
+      raw = await db.tasks.where('date').equals(dateFilter).toArray();
+    } else {
+      raw = await db.tasks.orderBy('date').toArray();
+    }
+    return sortTasks(raw);
+  }, [dateFilter]);
+
   const loadTasks = useCallback(async () => {
     try {
-      let result: Task[];
-      if (dateFilter) {
-        result = await db.tasks
-          .where('date')
-          .equals(dateFilter)
-          .toArray();
-      } else {
-        result = await db.tasks.orderBy('date').toArray();
-      }
-      // Sort: incomplete first, then by priority (high > medium > low), then by time
-      const priorityOrder = { high: 0, medium: 1, low: 2 };
-      result.sort((a, b) => {
-        // Completed tasks go last
-        if (a.completed !== b.completed) return a.completed ? 1 : -1;
-        // Then by priority
-        if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
-          return priorityOrder[a.priority] - priorityOrder[b.priority];
-        }
-        // Then by time (tasks with time first)
-        if (a.time && !b.time) return -1;
-        if (!a.time && b.time) return 1;
-        if (a.time && b.time) return a.time.localeCompare(b.time);
-        // Then by creation time
-        return a.createdAt.localeCompare(b.createdAt);
-      });
-      setTasks(result);
-      // Schedule reminders for tasks with time + reminderEnabled
-      result.forEach(t => {
+      const sorted = await queryTasks();
+      setTasks(sorted);
+      sorted.forEach(t => {
         if (t.reminderEnabled && t.time && !t.completed) {
           scheduleTaskReminder(t.id, t.title, t.date, t.time);
         }
@@ -51,60 +58,60 @@ export function useTasks(dateFilter?: string) {
     } finally {
       setLoading(false);
     }
-  }, [dateFilter]);
+  }, [queryTasks]);
 
   useEffect(() => {
     let cancelled = false;
 
-    const fetchTasks = async () => {
-      try {
-        let result: Task[];
-        if (dateFilter) {
-          result = await db.tasks
-            .where('date')
-            .equals(dateFilter)
-            .toArray();
-        } else {
-          result = await db.tasks.orderBy('date').toArray();
-        }
-        const priorityOrder = { high: 0, medium: 1, low: 2 };
-        result.sort((a, b) => {
-          if (a.completed !== b.completed) return a.completed ? 1 : -1;
-          if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
-            return priorityOrder[a.priority] - priorityOrder[b.priority];
-          }
-          if (a.time && !b.time) return -1;
-          if (!a.time && b.time) return 1;
-          if (a.time && b.time) return a.time.localeCompare(b.time);
-          return a.createdAt.localeCompare(b.createdAt);
-        });
+    queryTasks()
+      .then(sorted => {
         if (!cancelled) {
           setTasks(prev => {
             if (
-              prev.length === result.length &&
-              prev.every((t, i) => t.id === result[i].id && t.updatedAt === result[i].updatedAt && t.completed === result[i].completed)
+              prev.length === sorted.length &&
+              prev.every(
+                (t, i) =>
+                  t.id === sorted[i].id &&
+                  t.updatedAt === sorted[i].updatedAt &&
+                  t.completed === sorted[i].completed
+              )
             ) {
               return prev;
             }
-            return result;
+            return sorted;
           });
           setLoading(false);
         }
-        result.forEach(t => {
+        sorted.forEach(t => {
           if (t.reminderEnabled && t.time && !t.completed) {
             scheduleTaskReminder(t.id, t.title, t.date, t.time);
           }
         });
-      } catch (err) {
+      })
+      .catch(err => {
         console.error('Failed to load tasks:', err);
         if (!cancelled) setLoading(false);
-      }
-    };
-
-    fetchTasks();
+      });
 
     const handleSynced = () => {
-      fetchTasks();
+      queryTasks().then(sorted => {
+        if (!cancelled) {
+          setTasks(prev => {
+            if (
+              prev.length === sorted.length &&
+              prev.every(
+                (t, i) =>
+                  t.id === sorted[i].id &&
+                  t.updatedAt === sorted[i].updatedAt &&
+                  t.completed === sorted[i].completed
+              )
+            ) {
+              return prev;
+            }
+            return sorted;
+          });
+        }
+      });
     };
 
     window.addEventListener('tsugi:data-synced', handleSynced);
@@ -112,91 +119,73 @@ export function useTasks(dateFilter?: string) {
       cancelled = true;
       window.removeEventListener('tsugi:data-synced', handleSynced);
     };
-  }, [dateFilter]);
+  }, [queryTasks]);
 
-  const addTask = useCallback(async (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const now = new Date().toISOString();
-    const newTask: Task = {
-      ...task,
-      id: uuidv4(),
-      createdAt: now,
-      updatedAt: now,
-    };
-    await saveTaskWithOutbox(newTask);
-    if (newTask.reminderEnabled && newTask.time) {
-      scheduleTaskReminder(newTask.id, newTask.title, newTask.date, newTask.time);
-    }
-    if (!dateFilter || newTask.date === dateFilter) {
-      setTasks(prev => {
-        const updated = [...prev, newTask];
-        const priorityOrder = { high: 0, medium: 1, low: 2 };
-        updated.sort((a, b) => {
-          if (a.completed !== b.completed) return a.completed ? 1 : -1;
-          if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
-            return priorityOrder[a.priority] - priorityOrder[b.priority];
-          }
-          return a.createdAt.localeCompare(b.createdAt);
-        });
-        return updated;
-      });
-    }
-    return newTask;
-  }, [dateFilter]);
+  const addTask = useCallback(
+    async (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
+      const now = new Date().toISOString();
+      const newTask: Task = {
+        ...task,
+        id: uuidv4(),
+        createdAt: now,
+        updatedAt: now,
+      };
+      await saveTaskWithOutbox(newTask);
+      if (newTask.reminderEnabled && newTask.time) {
+        scheduleTaskReminder(newTask.id, newTask.title, newTask.date, newTask.time);
+      }
+      if (!dateFilter || newTask.date === dateFilter) {
+        setTasks(prev => sortTasks([...prev, newTask]));
+      }
+      return newTask;
+    },
+    [dateFilter]
+  );
 
-  const updateTask = useCallback(async (id: string, updates: Partial<Task>) => {
-    const current = await db.tasks.get(id);
-    if (!current) return;
-    const updatedTask: Task = {
-      ...current,
-      ...updates,
-      updatedAt: new Date().toISOString(),
-    };
-    await saveTaskWithOutbox(updatedTask);
-    if (dateFilter && updatedTask.date !== dateFilter) {
-      setTasks(prev => prev.filter(t => t.id !== id));
-    } else {
-      setTasks(prev => {
-        const exists = prev.some(t => t.id === id);
-        const updated = exists ? prev.map(t => t.id === id ? updatedTask : t) : [...prev, updatedTask];
-        const priorityOrder = { high: 0, medium: 1, low: 2 };
-        updated.sort((a, b) => {
-          if (a.completed !== b.completed) return a.completed ? 1 : -1;
-          if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
-            return priorityOrder[a.priority] - priorityOrder[b.priority];
-          }
-          return a.createdAt.localeCompare(b.createdAt);
+  const updateTask = useCallback(
+    async (id: string, updates: Partial<Task>) => {
+      const current = await db.tasks.get(id);
+      if (!current) return;
+      const updatedTask: Task = {
+        ...current,
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      };
+      await saveTaskWithOutbox(updatedTask);
+      if (dateFilter && updatedTask.date !== dateFilter) {
+        setTasks(prev => prev.filter(t => t.id !== id));
+      } else {
+        setTasks(prev => {
+          const exists = prev.some(t => t.id === id);
+          const next = exists ? prev.map(t => (t.id === id ? updatedTask : t)) : [...prev, updatedTask];
+          return sortTasks(next);
         });
-        return updated;
-      });
-    }
-  }, [dateFilter]);
+      }
+    },
+    [dateFilter]
+  );
 
-  const toggleComplete = useCallback(async (id: string) => {
-    const task = await db.tasks.get(id);
-    if (!task) return;
-    const updatedTask: Task = {
-      ...task,
-      completed: !task.completed,
-      updatedAt: new Date().toISOString(),
-    };
-    await saveTaskWithOutbox(updatedTask);
-    if (dateFilter && updatedTask.date !== dateFilter) {
-      setTasks(prev => prev.filter(t => t.id !== id));
-    } else {
-      setTasks(prev => {
-        const updated = prev.map(t => t.id === id ? updatedTask : t);
-        const priorityOrder = { high: 0, medium: 1, low: 2 };
-        updated.sort((a, b) => {
-          if (a.completed !== b.completed) return a.completed ? 1 : -1;
-          if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
-            return priorityOrder[a.priority] - priorityOrder[b.priority];
-          }
-          return a.createdAt.localeCompare(b.createdAt);
+  const toggleComplete = useCallback(
+    async (id: string) => {
+      const task = await db.tasks.get(id);
+      if (!task) return;
+      const updatedTask: Task = {
+        ...task,
+        completed: !task.completed,
+        updatedAt: new Date().toISOString(),
+      };
+      await saveTaskWithOutbox(updatedTask);
+      if (dateFilter && updatedTask.date !== dateFilter) {
+        setTasks(prev => prev.filter(t => t.id !== id));
+      } else {
+        setTasks(prev => {
+          const next = prev.map(t => (t.id === id ? updatedTask : t));
+          return sortTasks(next);
         });
-        return updated;
-      });
-    }
-  }, [dateFilter]);
+      }
+    },
+    [dateFilter]
+  );
 
   const deleteTask = useCallback(async (id: string) => {
     cancelTaskReminder(id);
@@ -204,7 +193,15 @@ export function useTasks(dateFilter?: string) {
     setTasks(prev => prev.filter(t => t.id !== id));
   }, []);
 
-  return { tasks, loading, addTask, updateTask, toggleComplete, deleteTask, refreshTasks: loadTasks };
+  return {
+    tasks,
+    loading,
+    addTask,
+    updateTask,
+    toggleComplete,
+    deleteTask,
+    refreshTasks: loadTasks,
+  };
 }
 
 export interface DayTaskSummary {
@@ -217,120 +214,69 @@ export function usePendingTasksSummary() {
   const [taskSummaryByDate, setTaskSummaryByDate] = useState<{ [dateStr: string]: DayTaskSummary }>({});
   const [pastPendingCount, setPastPendingCount] = useState(0);
   const [pastPendingDates, setPastPendingDates] = useState<{ date: string; pendingCount: number }[]>([]);
-  const [todayPendingCount, setTodayPendingCount] = useState(0);
-  const [futurePendingCount, setFuturePendingCount] = useState(0);
-  const [upcomingPendingCount, setUpcomingPendingCount] = useState(0);
-  const [upcomingPendingDates, setUpcomingPendingDates] = useState<{ date: string; pendingCount: number }[]>([]);
+
+  const computeSummary = useCallback(async () => {
+    const allTasks = await db.tasks.toArray();
+    const todayStr = getTodayString();
+    const byDate: { [dateStr: string]: DayTaskSummary } = {};
+    let pastPendingTotal = 0;
+    const pastGroups: { [dateStr: string]: number } = {};
+
+    for (const t of allTasks) {
+      if (!byDate[t.date]) {
+        byDate[t.date] = { total: 0, completed: 0, pending: 0 };
+      }
+      byDate[t.date].total += 1;
+      if (t.completed) {
+        byDate[t.date].completed += 1;
+      } else {
+        byDate[t.date].pending += 1;
+        if (t.date < todayStr) {
+          pastPendingTotal += 1;
+          pastGroups[t.date] = (pastGroups[t.date] || 0) + 1;
+        }
+      }
+    }
+
+    const sortedPastDates = Object.entries(pastGroups)
+      .map(([date, pendingCount]) => ({ date, pendingCount }))
+      .sort((a, b) => b.date.localeCompare(a.date));
+
+    return { byDate, pastPendingTotal, sortedPastDates };
+  }, []);
 
   const loadSummary = useCallback(async () => {
     try {
-      const allTasks = await db.tasks.toArray();
-      const todayStr = getTodayString();
-      const byDate: { [dateStr: string]: DayTaskSummary } = {};
-      let pastPendingTotal = 0;
-      let todayPendingTotal = 0;
-      let futurePendingTotal = 0;
-      const pastGroups: { [dateStr: string]: number } = {};
-      const upcomingGroups: { [dateStr: string]: number } = {};
-
-      for (const t of allTasks) {
-        if (!byDate[t.date]) {
-          byDate[t.date] = { total: 0, completed: 0, pending: 0 };
-        }
-        byDate[t.date].total += 1;
-        if (t.completed) {
-          byDate[t.date].completed += 1;
-        } else {
-          byDate[t.date].pending += 1;
-          if (t.date < todayStr) {
-            pastPendingTotal += 1;
-            pastGroups[t.date] = (pastGroups[t.date] || 0) + 1;
-          } else if (t.date === todayStr) {
-            todayPendingTotal += 1;
-            upcomingGroups[t.date] = (upcomingGroups[t.date] || 0) + 1;
-          } else {
-            futurePendingTotal += 1;
-            upcomingGroups[t.date] = (upcomingGroups[t.date] || 0) + 1;
-          }
-        }
-      }
-
+      const { byDate, pastPendingTotal, sortedPastDates } = await computeSummary();
       setTaskSummaryByDate(byDate);
       setPastPendingCount(pastPendingTotal);
-      setTodayPendingCount(todayPendingTotal);
-      setFuturePendingCount(futurePendingTotal);
-      setUpcomingPendingCount(todayPendingTotal + futurePendingTotal);
-
-      const sortedPastDates = Object.entries(pastGroups)
-        .map(([date, pendingCount]) => ({ date, pendingCount }))
-        .sort((a, b) => b.date.localeCompare(a.date));
-
-      const sortedUpcomingDates = Object.entries(upcomingGroups)
-        .map(([date, pendingCount]) => ({ date, pendingCount }))
-        .sort((a, b) => a.date.localeCompare(b.date));
-
       setPastPendingDates(sortedPastDates);
-      setUpcomingPendingDates(sortedUpcomingDates);
     } catch (err) {
       console.error('Failed to load tasks summary:', err);
     }
-  }, []);
+  }, [computeSummary]);
 
   useEffect(() => {
     let cancelled = false;
 
-    db.tasks.toArray().then(allTasks => {
-      if (cancelled) return;
-      const todayStr = getTodayString();
-      const byDate: { [dateStr: string]: DayTaskSummary } = {};
-      let pastPendingTotal = 0;
-      let todayPendingTotal = 0;
-      let futurePendingTotal = 0;
-      const pastGroups: { [dateStr: string]: number } = {};
-      const upcomingGroups: { [dateStr: string]: number } = {};
-
-      for (const t of allTasks) {
-        if (!byDate[t.date]) {
-          byDate[t.date] = { total: 0, completed: 0, pending: 0 };
+    computeSummary()
+      .then(({ byDate, pastPendingTotal, sortedPastDates }) => {
+        if (!cancelled) {
+          setTaskSummaryByDate(byDate);
+          setPastPendingCount(pastPendingTotal);
+          setPastPendingDates(sortedPastDates);
         }
-        byDate[t.date].total += 1;
-        if (t.completed) {
-          byDate[t.date].completed += 1;
-        } else {
-          byDate[t.date].pending += 1;
-          if (t.date < todayStr) {
-            pastPendingTotal += 1;
-            pastGroups[t.date] = (pastGroups[t.date] || 0) + 1;
-          } else if (t.date === todayStr) {
-            todayPendingTotal += 1;
-            upcomingGroups[t.date] = (upcomingGroups[t.date] || 0) + 1;
-          } else {
-            futurePendingTotal += 1;
-            upcomingGroups[t.date] = (upcomingGroups[t.date] || 0) + 1;
-          }
-        }
-      }
-
-      setTaskSummaryByDate(byDate);
-      setPastPendingCount(pastPendingTotal);
-      setTodayPendingCount(todayPendingTotal);
-      setFuturePendingCount(futurePendingTotal);
-      setUpcomingPendingCount(todayPendingTotal + futurePendingTotal);
-
-      const sortedPastDates = Object.entries(pastGroups)
-        .map(([date, pendingCount]) => ({ date, pendingCount }))
-        .sort((a, b) => b.date.localeCompare(a.date));
-
-      const sortedUpcomingDates = Object.entries(upcomingGroups)
-        .map(([date, pendingCount]) => ({ date, pendingCount }))
-        .sort((a, b) => a.date.localeCompare(b.date));
-
-      setPastPendingDates(sortedPastDates);
-      setUpcomingPendingDates(sortedUpcomingDates);
-    }).catch(err => console.error('Failed to load tasks summary:', err));
+      })
+      .catch(err => console.error('Failed to load tasks summary:', err));
 
     const handleDataChanged = () => {
-      loadSummary();
+      computeSummary().then(({ byDate, pastPendingTotal, sortedPastDates }) => {
+        if (!cancelled) {
+          setTaskSummaryByDate(byDate);
+          setPastPendingCount(pastPendingTotal);
+          setPastPendingDates(sortedPastDates);
+        }
+      });
     };
 
     window.addEventListener('tsugi:data-synced', handleDataChanged);
@@ -340,16 +286,12 @@ export function usePendingTasksSummary() {
       window.removeEventListener('tsugi:data-synced', handleDataChanged);
       window.removeEventListener('tsugi:outbox-changed', handleDataChanged);
     };
-  }, [loadSummary]);
+  }, [computeSummary]);
 
   return {
     taskSummaryByDate,
     pastPendingCount,
     pastPendingDates,
-    todayPendingCount,
-    futurePendingCount,
-    upcomingPendingCount,
-    upcomingPendingDates,
     refreshSummary: loadSummary,
   };
 }

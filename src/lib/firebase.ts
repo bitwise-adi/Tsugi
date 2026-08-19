@@ -8,12 +8,12 @@ import {
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBQLZQ7MY-CNZ-ANLefMsnyxrqFmrj1L64",
-  authDomain: "locome-8a3b6.firebaseapp.com",
-  projectId: "locome-8a3b6",
-  storageBucket: "locome-8a3b6.firebasestorage.app",
-  messagingSenderId: "706318116292",
-  appId: "1:706318116292:web:5d5adc83ce9b8edbe73091"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyBQLZQ7MY-CNZ-ANLefMsnyxrqFmrj1L64",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "locome-8a3b6.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "locome-8a3b6",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "locome-8a3b6.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "706318116292",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:706318116292:web:5d5adc83ce9b8edbe73091",
 };
 
 // Initialize Firebase App
