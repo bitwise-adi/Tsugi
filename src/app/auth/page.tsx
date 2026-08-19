@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/components/AuthProvider';
 import { signInWithGoogle, signInWithEmail, signUpWithEmail, checkRedirectResult } from '@/lib/auth';
 import { LogIn, Mail, Globe } from 'lucide-react';
@@ -115,7 +116,17 @@ export default function AuthPage() {
   return (
     <div className={styles.container}>
       <div className={styles.hero}>
-        <div className={styles.logoIcon}>✓</div>
+        <div className={styles.logoWrapper}>
+          <div className={styles.ambientGlow} />
+          <Image
+            src="/icon.svg"
+            alt="Tsugi(t) Logo"
+            className={styles.logoSvg}
+            width={76}
+            height={76}
+            priority
+          />
+        </div>
         <h1 className={styles.heroTitle}>Tsugi(t)</h1>
         <p className={styles.heroSub}>Sign in to sync your data across devices</p>
       </div>
