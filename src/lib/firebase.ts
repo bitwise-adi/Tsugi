@@ -19,22 +19,21 @@ const firebaseConfig = {
   appId: "1:706318116292:web:5d5adc83ce9b8edbe73091"
 };
 
-// Initialize Firebase App
+// Initialize Firebase App (prevent duplicate app initialization)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Auth with multi-layer persistence fallback
-// (indexedDB -> localStorage -> sessionStorage) to prevent "Database is closing" error in mobile/background browsers
+// Prioritize browserLocalPersistence (localStorage) so mobile background tab suspension
+// cannot close IndexedDB and cause "Database is closing/hidden" errors.
 let authInstance: Auth;
-try {
-  if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined') {
+  try {
     authInstance = initializeAuth(app, {
-      persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence],
+      persistence: [browserLocalPersistence, browserSessionPersistence, indexedDBLocalPersistence],
     });
-  } else {
+  } catch {
     authInstance = getAuth(app);
   }
-} catch {
-  // If already initialized (e.g. during Fast Refresh / HMR), use existing instance
+} else {
   authInstance = getAuth(app);
 }
 

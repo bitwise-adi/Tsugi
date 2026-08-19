@@ -6,6 +6,52 @@ import { signInWithGoogle, signInWithEmail, signUpWithEmail, checkRedirectResult
 import { LogIn, Mail, Globe } from 'lucide-react';
 import styles from './page.module.css';
 
+function formatAuthError(err: unknown): string {
+  if (!err) return '';
+  if (typeof err === 'string') return err;
+  const errorObj = err as { code?: string; message?: string };
+  const code = errorObj.code || '';
+  const message = errorObj.message || '';
+
+  // Suppress benign user cancellations
+  if (
+    code === 'auth/popup-closed-by-user' ||
+    code === 'auth/cancelled-popup-request' ||
+    message.includes('popup-closed-by-user') ||
+    message.includes('cancelled-popup-request')
+  ) {
+    return '';
+  }
+
+  // Friendly human-readable messages for known error codes
+  if (code === 'auth/popup-blocked') {
+    return 'Popup was blocked by your browser. Please allow popups or try again.';
+  }
+  if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
+    return 'Invalid email or password. Please check your credentials.';
+  }
+  if (code === 'auth/email-already-in-use') {
+    return 'This email is already registered. Please sign in instead.';
+  }
+  if (code === 'auth/weak-password') {
+    return 'Password is too weak. Please use at least 6 characters.';
+  }
+  if (code === 'auth/network-request-failed') {
+    return 'Network connection error. Please check your internet connection.';
+  }
+  if (code === 'auth/unauthorized-domain') {
+    return 'Domain is not authorized in Firebase Console for Google sign-in.';
+  }
+
+  // Clean message: strip technical prefix without removing the actual reason
+  const cleanMsg = message
+    .replace(/^Firebase:\s*/i, '')
+    .replace(/^Error\s*\((auth\/[^)]+)\):\s*/i, '$1: ')
+    .trim();
+
+  return cleanMsg || 'Authentication failed. Please try again.';
+}
+
 export default function AuthPage() {
   const { user } = useAuth();
   const [mode, setMode] = useState<'login' | 'signup'>('login');
@@ -17,7 +63,7 @@ export default function AuthPage() {
   // Check if returning from a Google redirect sign-in flow
   useEffect(() => {
     checkRedirectResult().catch(err => {
-      console.error('Redirect sign-in check failed:', err);
+      console.error('Redirect sign-in check error:', err);
     });
   }, []);
 
@@ -41,13 +87,7 @@ export default function AuthPage() {
     try {
       await signInWithGoogle();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Google sign-in failed';
-      // Suppress benign user cancellation
-      if (msg.includes('popup-closed-by-user') || msg.includes('cancelled-popup-request')) {
-        setError('');
-      } else {
-        setError(msg.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '').trim());
-      }
+      setError(formatAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -66,8 +106,7 @@ export default function AuthPage() {
         await signUpWithEmail(email, password);
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Authentication failed';
-      setError(msg.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '').trim());
+      setError(formatAuthError(err));
     } finally {
       setLoading(false);
     }
