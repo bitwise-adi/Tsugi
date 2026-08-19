@@ -1,12 +1,9 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
-  initializeAuth,
   getAuth,
+  setPersistence,
   browserLocalPersistence,
-  browserSessionPersistence,
-  indexedDBLocalPersistence,
   GoogleAuthProvider,
-  type Auth,
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
@@ -19,25 +16,18 @@ const firebaseConfig = {
   appId: "1:706318116292:web:5d5adc83ce9b8edbe73091"
 };
 
-// Initialize Firebase App (prevent duplicate app initialization)
+// Initialize Firebase App
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Prioritize browserLocalPersistence (localStorage) so mobile background tab suspension
-// cannot close IndexedDB and cause "Database is closing/hidden" errors.
-let authInstance: Auth;
+export const auth = getAuth(app);
+
+// Use localStorage persistence in browser to avoid IndexedDB closing/hidden errors on mobile
 if (typeof window !== 'undefined') {
-  try {
-    authInstance = initializeAuth(app, {
-      persistence: [browserLocalPersistence, browserSessionPersistence, indexedDBLocalPersistence],
-    });
-  } catch {
-    authInstance = getAuth(app);
-  }
-} else {
-  authInstance = getAuth(app);
+  setPersistence(auth, browserLocalPersistence).catch((err) => {
+    console.warn('Firebase setPersistence notice (ignored):', err);
+  });
 }
 
-export const auth = authInstance;
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
