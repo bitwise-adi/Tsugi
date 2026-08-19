@@ -8,7 +8,7 @@ import styles from './HabitHeatmap.module.css';
 
 interface HabitHeatmapProps {
   entries: HabitEntry[];
-  color: string;
+  color?: string;
   habit?: Habit;
   selectedMonth?: Date;
 }
@@ -16,7 +16,7 @@ interface HabitHeatmapProps {
 // 52 weeks = 364 days (~1 full year)
 const FULL_YEAR_DAYS = 364;
 
-export default function HabitHeatmap({ entries, color, habit, selectedMonth }: HabitHeatmapProps) {
+export default function HabitHeatmap({ entries, habit, selectedMonth }: HabitHeatmapProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { weeks, monthLabels, anchorDate } = useMemo(() => {
@@ -164,7 +164,6 @@ export default function HabitHeatmap({ entries, color, habit, selectedMonth }: H
                     <div
                       key={dayIdx}
                       className={`${styles.cell} ${cls}`}
-                      style={cell.status === 'done' ? { backgroundColor: color } as React.CSSProperties : undefined}
                       title={`${dateLabel}: ${statusDesc}`}
                     />
                   );
@@ -188,7 +187,7 @@ export default function HabitHeatmap({ entries, color, habit, selectedMonth }: H
         )}
         <span className={styles.legendDivider} />
         <span className={styles.legendLabel}>Done</span>
-        <div className={`${styles.cell} ${styles.cellDone}`} style={{ backgroundColor: color }} />
+        <div className={`${styles.cell} ${styles.cellDone}`} />
         <span className={styles.legendDivider} />
         <span className={styles.legendLabel}>Missed</span>
         <div className={`${styles.cell} ${styles.cellMissed}`} />

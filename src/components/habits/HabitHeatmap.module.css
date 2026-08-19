@@ -120,18 +120,18 @@
 }
 
 .cellDone {
-  /* backgroundColor set inline via habit color */
-  opacity: 0.85;
+  background: var(--color-done);
+  opacity: 0.9;
 }
 
 .cellMissed {
   background: var(--color-missed);
-  opacity: 0.75;
+  opacity: 0.85;
 }
 
 .cellExcused {
   background: var(--color-excused);
-  opacity: 0.75;
+  opacity: 0.85;
 }
 
 /* Legend */
