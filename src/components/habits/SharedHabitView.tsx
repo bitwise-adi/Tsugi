@@ -16,7 +16,7 @@ import {
   isFuture,
   isSameMonth,
 } from 'date-fns';
-import { calculateStreak } from '@/hooks/useHabits';
+import { calculateStreak, calculateMonthRate } from '@/hooks/useHabits';
 import { isHabitScheduledOnDate } from '@/lib/schedule';
 import {
   ArrowLeft,
@@ -58,6 +58,7 @@ export default function SharedHabitView({
   const displayName = ownerName || sharedByName;
 
   const stats = useMemo(() => calculateStreak(entries, habit), [entries, habit]);
+  const monthRate = useMemo(() => calculateMonthRate(entries, habit, currentMonth), [entries, habit, currentMonth]);
 
   const entriesCountByMonth = useMemo(() => {
     const counts: { [yearMonth: string]: number } = {};
@@ -126,8 +127,8 @@ export default function SharedHabitView({
         </div>
         <div className={styles.statCard}>
           <TrendingUp size={18} className={styles.statIconRate} />
-          <div className={styles.statValue}>{stats.rate}%</div>
-          <div className={styles.statLabel}>Rate</div>
+          <div className={styles.statValue}>{monthRate}%</div>
+          <div className={styles.statLabel}>{format(currentMonth, 'MMM')} Rate</div>
         </div>
       </div>
 

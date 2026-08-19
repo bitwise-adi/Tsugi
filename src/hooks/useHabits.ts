@@ -11,6 +11,7 @@ import {
 import { isHabitScheduledOnDate } from '@/lib/schedule';
 import type { Habit, HabitEntry } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
+import { startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, format } from 'date-fns';
 
 // --- Habit CRUD ---
 
@@ -362,4 +363,46 @@ export function calculateStreak(
   longest = Math.max(longest, current);
 
   return { current, longest, total: totalDone, rate };
+}
+
+/**
+ * Calculates the completion rate (%) for a specific month.
+ * If the month is the current month, only days up to today are evaluated
+ * so that future days do not artificially lower the completion percentage.
+ */
+export function calculateMonthRate(
+  entries: HabitEntry[],
+  habit: Habit,
+  monthDate: Date
+): number {
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+
+  const mStart = startOfMonth(monthDate);
+  const mEnd = endOfMonth(monthDate);
+  const effectiveEnd = isSameMonth(monthDate, today) ? today : mEnd;
+
+  if (mStart > today) {
+    return 0; // Future month
+  }
+
+  const days = eachDayOfInterval({ start: mStart, end: effectiveEnd });
+  const doneDates = new Set(entries.filter(e => e.status === 'done').map(e => e.date));
+
+  let scheduledCount = 0;
+  let doneCount = 0;
+
+  days.forEach(d => {
+    const isScheduled = isHabitScheduledOnDate(habit, d);
+    if (isScheduled) {
+      scheduledCount++;
+      const dateStr = format(d, 'yyyy-MM-dd');
+      if (doneDates.has(dateStr)) {
+        doneCount++;
+      }
+    }
+  });
+
+  if (scheduledCount === 0) return doneCount > 0 ? 100 : 0;
+  return Math.min(100, Math.round((doneCount / scheduledCount) * 100));
 }

@@ -15,7 +15,7 @@ import {
   isFuture,
   isSameMonth,
 } from 'date-fns';
-import { useHabitEntries, calculateStreak } from '@/hooks/useHabits';
+import { useHabitEntries, calculateStreak, calculateMonthRate } from '@/hooks/useHabits';
 import { useAuth } from '@/components/AuthProvider';
 import ShareHabitModal from './ShareHabitModal';
 import MonthPickerModal from './MonthPickerModal';
@@ -66,6 +66,7 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
   const [showMonthPicker, setShowMonthPicker] = useState(false);
 
   const stats = useMemo(() => calculateStreak(entries, habit), [entries, habit]);
+  const monthRate = useMemo(() => calculateMonthRate(entries, habit, currentMonth), [entries, habit, currentMonth]);
 
   const entriesCountByMonth = useMemo(() => {
     const counts: { [yearMonth: string]: number } = {};
@@ -196,8 +197,8 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
         </div>
         <div className={styles.statCard}>
           <TrendingUp size={18} className={styles.statIconRate} />
-          <div className={styles.statValue}>{stats.rate}%</div>
-          <div className={styles.statLabel}>Rate</div>
+          <div className={styles.statValue}>{monthRate}%</div>
+          <div className={styles.statLabel}>{format(currentMonth, 'MMM')} Rate</div>
         </div>
       </div>
 

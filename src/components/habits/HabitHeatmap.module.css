@@ -38,8 +38,9 @@
 
 .heatmapGrid {
   display: flex;
-  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-2);
+  padding: var(--space-3);
   min-width: max-content;
+  align-items: flex-start;
 }
 
 /* Pinned Sticky Left Day Labels */
@@ -55,12 +56,12 @@
   margin-right: var(--space-2);
   border-right: 1px solid var(--border-subtle);
   flex-shrink: 0;
-  box-shadow: 2px 0 6px -2px rgba(0, 0, 0, 0.15);
+  box-shadow: 2px 0 6px -2px rgba(0, 0, 0, 0.2);
 }
 
 .dayLabelsHeaderSpacer {
   height: 20px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .dayLabelList {
@@ -81,39 +82,51 @@
   letter-spacing: -0.02em;
 }
 
-/* Scrollable Container */
-.columnsContainer {
+/* Months Container */
+.monthsContainer {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+/* Individual Month Block */
+.monthBlock {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  padding: 0 4px 4px 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  transition: background var(--transition-fast);
 }
 
-/* Month Headers */
-.monthHeadersRow {
-  display: flex;
+.monthBlock:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.currentMonthBlock {
+  border-color: var(--accent-subtle);
+  background: rgba(var(--accent), 0.04);
+}
+
+.monthHeader {
   height: 20px;
-  align-items: center;
-}
-
-.monthHeaderGroup {
   display: flex;
   align-items: center;
-  padding-left: 2px;
-  box-sizing: border-box;
-  overflow: hidden;
-  white-space: nowrap;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 2px;
 }
 
-.monthHeaderText {
+.monthLabelText {
   font-size: 10px;
   font-weight: var(--font-bold);
   color: var(--text-secondary);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
 }
 
-/* Weeks Grid */
-.weeksRow {
+/* Month Week Columns */
+.monthWeeksRow {
   display: flex;
   gap: 3px;
 }
@@ -122,11 +135,6 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
-}
-
-.newMonthCol {
-  border-left: 1px dashed var(--border-subtle);
-  padding-left: 2px;
 }
 
 /* Cells */
@@ -195,9 +203,4 @@
   font-size: 11px;
   font-weight: var(--font-medium);
   color: var(--text-secondary);
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
 }
