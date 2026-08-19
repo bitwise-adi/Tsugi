@@ -30,6 +30,7 @@ import {
   Hash,
   Eye,
   User,
+  FileText,
 } from 'lucide-react';
 import type { Habit, HabitEntry } from '@/types';
 import styles from './SharedHabitView.module.css';
@@ -177,6 +178,11 @@ export default function SharedHabitView({ habit, entries, ownerName, onBack }: S
                     {entry.status === 'done' && <Check size={12} />}
                     {entry.status === 'missed' && <X size={12} />}
                     {entry.status === 'excused' && <AlertTriangle size={10} />}
+                  </span>
+                )}
+                {entry?.note && (
+                  <span className={styles.noteIndicator} title={`Note: ${entry.note}`}>
+                    <FileText size={9} />
                   </span>
                 )}
               </div>

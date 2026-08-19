@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useTasks, getTodayString } from '@/hooks/useTasks';
+import { useTasks, usePendingTasksSummary, getTodayString } from '@/hooks/useTasks';
 import TaskItem from '@/components/tasks/TaskItem';
 import AddTaskModal from '@/components/tasks/AddTaskModal';
 import {
@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CalendarDays,
+  AlertCircle,
 } from 'lucide-react';
 import { format, addDays, subDays, isToday, isTomorrow, isYesterday, parseISO } from 'date-fns';
 import styles from './page.module.css';
@@ -26,6 +27,7 @@ export default function TasksPage() {
   const [selectedDate, setSelectedDate] = useState(getTodayString());
   const { tasks, loading, addTask, toggleComplete, deleteTask, updateTask } =
     useTasks(selectedDate);
+  const { taskSummaryByDate, pastPendingCount, pastPendingDates } = usePendingTasksSummary();
   const [showAddModal, setShowAddModal] = useState(false);
 
   const completedCount = useMemo(
@@ -33,6 +35,7 @@ export default function TasksPage() {
     [tasks]
   );
   const totalCount = tasks.length;
+  const pendingCount = totalCount - completedCount;
 
   const goToday = () => setSelectedDate(getTodayString());
   const goPrev = () =>
@@ -41,6 +44,31 @@ export default function TasksPage() {
     setSelectedDate((d) => format(addDays(parseISO(d), 1), 'yyyy-MM-dd'));
 
   const isCurrentlyToday = isToday(parseISO(selectedDate));
+  const isPastDate = selectedDate < getTodayString();
+
+  // 7-day strip around selectedDate
+  const dayStrip = useMemo(() => {
+    const center = parseISO(selectedDate);
+    return [-3, -2, -1, 0, 1, 2, 3].map(offset => {
+      const d = offset >= 0 ? addDays(center, offset) : subDays(center, Math.abs(offset));
+      const dateStr = format(d, 'yyyy-MM-dd');
+      const isSelected = dateStr === selectedDate;
+      const today = isToday(d);
+      const summary = taskSummaryByDate[dateStr];
+      const isPast = dateStr < getTodayString();
+      return {
+        dateStr,
+        dayName: format(d, 'EEE'),
+        dayNumber: format(d, 'd'),
+        isSelected,
+        isToday: today,
+        isPast,
+        total: summary?.total || 0,
+        pending: summary?.pending || 0,
+        completed: summary?.completed || 0,
+      };
+    });
+  }, [selectedDate, taskSummaryByDate]);
 
   return (
     <div className={styles.container}>
@@ -65,9 +93,38 @@ export default function TasksPage() {
         <p className={styles.subtitle}>
           {totalCount === 0
             ? 'No tasks for this day'
+            : isPastDate && pendingCount > 0
+            ? `${pendingCount} pending task${pendingCount > 1 ? 's' : ''} from past day (${completedCount}/${totalCount} completed)`
             : `${completedCount}/${totalCount} completed`}
         </p>
       </header>
+
+      {/* Past Pending Tasks Alert Banner */}
+      {pastPendingCount > 0 && (
+        <div className={styles.pastPendingBanner}>
+          <div className={styles.pastPendingTop}>
+            <div className={styles.pastPendingTitleRow}>
+              <AlertCircle size={16} className={styles.alertIcon} />
+              <span className={styles.pastPendingTitle}>
+                <strong>{pastPendingCount}</strong> incomplete task{pastPendingCount > 1 ? 's' : ''} from previous days
+              </span>
+            </div>
+          </div>
+          <div className={styles.pastPendingChips}>
+            {pastPendingDates.map(item => (
+              <button
+                key={item.date}
+                className={`${styles.pastDateChip} ${selectedDate === item.date ? styles.pastDateChipActive : ''}`}
+                onClick={() => setSelectedDate(item.date)}
+                id={`jump-past-task-${item.date}`}
+              >
+                <span>{formatDateHeading(item.date)}</span>
+                <span className={styles.pastChipCount}>{item.pendingCount}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Date Nav */}
       <div className={styles.dateNav}>
@@ -93,6 +150,36 @@ export default function TasksPage() {
         >
           <ChevronRight size={20} />
         </button>
+      </div>
+
+      {/* 7-Day Quick Strip */}
+      <div className={styles.dayStrip}>
+        {dayStrip.map(day => (
+          <button
+            key={day.dateStr}
+            className={`
+              ${styles.dayStripPill}
+              ${day.isSelected ? styles.dayStripActive : ''}
+              ${day.isToday ? styles.dayStripToday : ''}
+            `}
+            onClick={() => setSelectedDate(day.dateStr)}
+            id={`day-strip-${day.dateStr}`}
+          >
+            <span className={styles.dayStripName}>{day.dayName}</span>
+            <span className={styles.dayStripNum}>{day.dayNumber}</span>
+            <div className={styles.dayStripIndicator}>
+              {day.total > 0 && day.pending === 0 && (
+                <span className={styles.dotDone} title="All tasks completed" />
+              )}
+              {day.total > 0 && day.pending > 0 && (
+                <span className={styles.dotPending} title={`${day.pending} pending task${day.pending > 1 ? 's' : ''}`}>
+                  {day.pending > 9 ? '9+' : day.pending}
+                </span>
+              )}
+              {day.total === 0 && <span className={styles.dotEmpty} />}
+            </div>
+          </button>
+        ))}
       </div>
 
       {/* Task List */}

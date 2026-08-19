@@ -254,6 +254,22 @@
   opacity: 0.4;
 }
 
+.noteIndicator {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  background: hsl(38, 92%, 55%);
+  color: #1e1b4b;
+  box-shadow: 0 1px 4px rgba(245, 158, 11, 0.4);
+  z-index: 1;
+}
+
 /* Desktop */
 @media (min-width: 769px) {
   .container {

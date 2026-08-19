@@ -32,6 +32,8 @@ import {
   Trash2,
   MessageSquare,
   Share2,
+  FileText,
+  StickyNote,
 } from 'lucide-react';
 import type { Habit, HabitStatus } from '@/types';
 import { isHabitScheduledOnDate } from '@/lib/schedule';
@@ -98,6 +100,13 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
 
   const selectedEntry = selectedDate ? getEntryForDate(selectedDate) : null;
   const isSelectedDateScheduled = selectedDate ? isHabitScheduledOnDate(habit, selectedDate) : true;
+
+  // Notes in the currently displayed month
+  const monthNotes = useMemo(() => {
+    return entries
+      .filter(e => e.note && e.note.trim().length > 0 && isSameMonth(new Date(e.date + 'T00:00:00'), currentMonth))
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [entries, currentMonth]);
 
   return (
     <div className={styles.container}>
@@ -249,12 +258,54 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
                     {entry.status === 'excused' && <AlertTriangle size={10} />}
                   </span>
                 )}
-                {entry?.note && <span className={styles.noteIndicator} />}
+                {entry?.note && (
+                  <span className={styles.noteIndicator} title={`Note: ${entry.note}`}>
+                    <FileText size={9} />
+                  </span>
+                )}
               </button>
             );
           })}
         </div>
       </div>
+
+      {/* Month Notes Section */}
+      {monthNotes.length > 0 && (
+        <div className={styles.notesContainer}>
+          <div className={styles.notesHeader}>
+            <div className={styles.notesTitleRow}>
+              <StickyNote size={16} className={styles.notesIcon} />
+              <h3 className={styles.notesTitle}>
+                Notes in {format(currentMonth, 'MMMM yyyy')}
+              </h3>
+            </div>
+            <span className={styles.notesCountBadge}>{monthNotes.length}</span>
+          </div>
+          <div className={styles.notesList}>
+            {monthNotes.map(n => {
+              const d = new Date(n.date + 'T00:00:00');
+              return (
+                <button
+                  key={n.id}
+                  className={styles.noteCard}
+                  onClick={() => handleDateClick(n.date, d)}
+                  id={`note-card-${n.date}`}
+                >
+                  <div className={styles.noteCardTop}>
+                    <span className={styles.noteDatePill}>{format(d, 'EEE, MMM d')}</span>
+                    {n.status && (
+                      <span className={`${styles.noteStatusPill} ${styles[`noteStatus_${n.status}`]}`}>
+                        {n.status === 'done' ? '✓ Done' : n.status === 'missed' ? '✕ Missed' : '⚠ Excused'}
+                      </span>
+                    )}
+                  </div>
+                  <p className={styles.noteText}>{n.note}</p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Status Popup Modal */}
       {selectedDate && (

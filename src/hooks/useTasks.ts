@@ -196,6 +196,106 @@ export function useTasks(dateFilter?: string) {
   return { tasks, loading, addTask, updateTask, toggleComplete, deleteTask, refreshTasks: loadTasks };
 }
 
+export interface DayTaskSummary {
+  total: number;
+  completed: number;
+  pending: number;
+}
+
+export function usePendingTasksSummary() {
+  const [taskSummaryByDate, setTaskSummaryByDate] = useState<{ [dateStr: string]: DayTaskSummary }>({});
+  const [pastPendingCount, setPastPendingCount] = useState(0);
+  const [pastPendingDates, setPastPendingDates] = useState<{ date: string; pendingCount: number }[]>([]);
+
+  const loadSummary = useCallback(async () => {
+    try {
+      const allTasks = await db.tasks.toArray();
+      const todayStr = getTodayString();
+      const byDate: { [dateStr: string]: DayTaskSummary } = {};
+      let pastPendingTotal = 0;
+      const pastGroups: { [dateStr: string]: number } = {};
+
+      for (const t of allTasks) {
+        if (!byDate[t.date]) {
+          byDate[t.date] = { total: 0, completed: 0, pending: 0 };
+        }
+        byDate[t.date].total += 1;
+        if (t.completed) {
+          byDate[t.date].completed += 1;
+        } else {
+          byDate[t.date].pending += 1;
+          if (t.date < todayStr) {
+            pastPendingTotal += 1;
+            pastGroups[t.date] = (pastGroups[t.date] || 0) + 1;
+          }
+        }
+      }
+
+      setTaskSummaryByDate(byDate);
+      setPastPendingCount(pastPendingTotal);
+
+      const sortedPastDates = Object.entries(pastGroups)
+        .map(([date, pendingCount]) => ({ date, pendingCount }))
+        .sort((a, b) => b.date.localeCompare(a.date)); // Most recent past date first
+
+      setPastPendingDates(sortedPastDates);
+    } catch (err) {
+      console.error('Failed to load tasks summary:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    db.tasks.toArray().then(allTasks => {
+      if (cancelled) return;
+      const todayStr = getTodayString();
+      const byDate: { [dateStr: string]: DayTaskSummary } = {};
+      let pastPendingTotal = 0;
+      const pastGroups: { [dateStr: string]: number } = {};
+
+      for (const t of allTasks) {
+        if (!byDate[t.date]) {
+          byDate[t.date] = { total: 0, completed: 0, pending: 0 };
+        }
+        byDate[t.date].total += 1;
+        if (t.completed) {
+          byDate[t.date].completed += 1;
+        } else {
+          byDate[t.date].pending += 1;
+          if (t.date < todayStr) {
+            pastPendingTotal += 1;
+            pastGroups[t.date] = (pastGroups[t.date] || 0) + 1;
+          }
+        }
+      }
+
+      setTaskSummaryByDate(byDate);
+      setPastPendingCount(pastPendingTotal);
+
+      const sortedPastDates = Object.entries(pastGroups)
+        .map(([date, pendingCount]) => ({ date, pendingCount }))
+        .sort((a, b) => b.date.localeCompare(a.date));
+
+      setPastPendingDates(sortedPastDates);
+    }).catch(err => console.error('Failed to load tasks summary:', err));
+
+    const handleDataChanged = () => {
+      loadSummary();
+    };
+
+    window.addEventListener('tsugi:data-synced', handleDataChanged);
+    window.addEventListener('tsugi:outbox-changed', handleDataChanged);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('tsugi:data-synced', handleDataChanged);
+      window.removeEventListener('tsugi:outbox-changed', handleDataChanged);
+    };
+  }, [loadSummary]);
+
+  return { taskSummaryByDate, pastPendingCount, pastPendingDates, refreshSummary: loadSummary };
+}
+
 // Helper to get today's date string
 export function getTodayString(): string {
   return format(new Date(), 'yyyy-MM-dd');

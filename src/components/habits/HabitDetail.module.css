@@ -308,12 +308,131 @@
 
 .noteIndicator {
   position: absolute;
-  bottom: 3px;
-  right: 3px;
-  width: 4px;
-  height: 4px;
+  top: 2px;
+  right: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  background: hsl(38, 92%, 55%);
+  color: #1e1b4b;
+  box-shadow: 0 1px 4px rgba(245, 158, 11, 0.4);
+  z-index: 1;
+}
+
+/* --- Month Notes Section --- */
+.notesContainer {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  animation: fadeInUp var(--transition-base) ease-out;
+}
+
+.notesHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.notesTitleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.notesIcon {
+  color: hsl(38, 92%, 55%);
+}
+
+.notesTitle {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+.notesCountBadge {
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  padding: 1px 8px;
   border-radius: var(--radius-full);
-  background: var(--accent-hsl);
+}
+
+.notesList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.noteCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  text-align: left;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  width: 100%;
+}
+
+.noteCard:hover {
+  border-color: var(--accent-hsl);
+  background: var(--bg-input-focus, var(--bg-card-hover));
+  transform: translateY(-1px);
+}
+
+.noteCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.noteDatePill {
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+}
+
+.noteStatusPill {
+  font-size: 10px;
+  font-weight: var(--font-semibold);
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+}
+
+.noteStatus_done {
+  background: var(--color-done-bg);
+  color: var(--color-done);
+}
+
+.noteStatus_missed {
+  background: var(--color-missed-bg);
+  color: var(--color-missed);
+}
+
+.noteStatus_excused {
+  background: var(--color-excused-bg);
+  color: var(--color-excused);
+}
+
+.noteText {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  line-height: var(--leading-normal);
+  word-break: break-word;
 }
 
 /* --- Status Popup Modal --- */
