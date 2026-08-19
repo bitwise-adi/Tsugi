@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import HabitHeatmap from './HabitHeatmap';
 import HabitChart from './HabitChart';
+import MonthPickerModal from './MonthPickerModal';
 import {
   format,
   startOfMonth,
@@ -21,6 +22,7 @@ import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Check,
   X,
   AlertTriangle,
@@ -38,16 +40,36 @@ import styles from './SharedHabitView.module.css';
 interface SharedHabitViewProps {
   habit: Habit;
   entries: HabitEntry[];
-  ownerName: string;
-  onBack: () => void;
+  ownerName?: string;
+  sharedByName?: string;
+  onBack?: () => void;
 }
 
-export default function SharedHabitView({ habit, entries, ownerName, onBack }: SharedHabitViewProps) {
+export default function SharedHabitView({
+  habit,
+  entries,
+  ownerName,
+  sharedByName,
+  onBack,
+}: SharedHabitViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
+
+  const displayName = ownerName || sharedByName;
 
   const stats = useMemo(() => calculateStreak(entries, habit), [entries, habit]);
 
-  // Calendar grid
+  const entriesCountByMonth = useMemo(() => {
+    const counts: { [yearMonth: string]: number } = {};
+    for (const e of entries) {
+      if (e.status) {
+        const ym = e.date.substring(0, 7);
+        counts[ym] = (counts[ym] || 0) + 1;
+      }
+    }
+    return counts;
+  }, [entries]);
+
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
@@ -59,22 +81,29 @@ export default function SharedHabitView({ habit, entries, ownerName, onBack }: S
     <div className={styles.container}>
       {/* Header */}
       <header className={styles.header}>
-        <button className={styles.backBtn} onClick={onBack} id="shared-habit-back">
-          <ArrowLeft size={20} />
-        </button>
+        {onBack && (
+          <button className={styles.backBtn} onClick={onBack} aria-label="Go back">
+            <ArrowLeft size={20} />
+          </button>
+        )}
         <div className={styles.headerInfo}>
           <div className={styles.titleRow}>
             <div className={styles.colorDot} style={{ background: habit.color }} />
             <h1 className={styles.title}>{habit.title}</h1>
           </div>
-          <div className={styles.ownerRow}>
-            <User size={12} />
-            <span className={styles.ownerName}>{ownerName}</span>
-          </div>
+          {habit.description && (
+            <p className={styles.description}>{habit.description}</p>
+          )}
+          {displayName && (
+            <div className={styles.sharedByBadge}>
+              <User size={12} />
+              <span>Shared by {displayName}</span>
+            </div>
+          )}
         </div>
         <div className={styles.readOnlyBadge}>
           <Eye size={14} />
-          <span>View Only</span>
+          <span>Read-only</span>
         </div>
       </header>
 
@@ -102,9 +131,9 @@ export default function SharedHabitView({ habit, entries, ownerName, onBack }: S
         </div>
       </div>
 
-      {/* Analytics */}
+      {/* Analytics: Heatmap + Weekly Chart */}
       <div className={styles.analyticsSection}>
-        <HabitHeatmap entries={entries} color={habit.color} habit={habit} />
+        <HabitHeatmap entries={entries} color={habit.color} habit={habit} selectedMonth={currentMonth} />
         <HabitChart entries={entries} color={habit.color} habit={habit} />
       </div>
 
@@ -117,9 +146,17 @@ export default function SharedHabitView({ habit, entries, ownerName, onBack }: S
         >
           <ChevronLeft size={20} />
         </button>
-        <h2 className={styles.monthLabel}>
-          {format(currentMonth, 'MMMM yyyy')}
-        </h2>
+        <button
+          className={styles.monthSelectTrigger}
+          onClick={() => setShowMonthPicker(true)}
+          aria-label="Select month"
+          title="Click to jump to any month"
+        >
+          <h2 className={styles.monthLabel}>
+            {format(currentMonth, 'MMMM yyyy')}
+          </h2>
+          <ChevronDown size={16} className={styles.monthSelectChevron} />
+        </button>
         <button
           className={styles.monthBtn}
           onClick={() => setCurrentMonth(prev => addMonths(prev, 1))}
@@ -190,6 +227,16 @@ export default function SharedHabitView({ habit, entries, ownerName, onBack }: S
           })}
         </div>
       </div>
+
+      {/* Exploded Month Picker Modal */}
+      {showMonthPicker && (
+        <MonthPickerModal
+          currentMonth={currentMonth}
+          onSelectMonth={setCurrentMonth}
+          onClose={() => setShowMonthPicker(false)}
+          entriesCountByMonth={entriesCountByMonth}
+        />
+      )}
     </div>
   );
 }

@@ -138,9 +138,44 @@
   margin-bottom: var(--space-4);
 }
 
+.monthSelectTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-lg);
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.monthSelectTrigger:hover {
+  background: var(--bg-input);
+  border-color: var(--border-subtle);
+  transform: translateY(-1px);
+}
+
+.monthSelectTrigger:active {
+  transform: scale(0.97);
+}
+
 .monthLabel {
   font-size: var(--text-lg);
   font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.monthSelectChevron {
+  color: var(--accent-hsl);
+  opacity: 0.8;
+  transition: transform var(--transition-fast);
+}
+
+.monthSelectTrigger:hover .monthSelectChevron {
+  opacity: 1;
+  transform: translateY(1px);
 }
 
 .monthBtn {
@@ -151,12 +186,18 @@
   height: 2.25rem;
   border-radius: var(--radius-full);
   color: var(--text-secondary);
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+  cursor: pointer;
 }
 
 .monthBtn:hover {
   background: var(--bg-input);
   color: var(--text-primary);
+  transform: scale(1.1);
+}
+
+.monthBtn:active {
+  transform: scale(0.92);
 }
 
 /* --- Calendar (read-only) --- */

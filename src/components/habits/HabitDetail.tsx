@@ -18,10 +18,12 @@ import {
 import { useHabitEntries, calculateStreak } from '@/hooks/useHabits';
 import { useAuth } from '@/components/AuthProvider';
 import ShareHabitModal from './ShareHabitModal';
+import MonthPickerModal from './MonthPickerModal';
 import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Check,
   X,
   AlertTriangle,
@@ -61,8 +63,20 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
 
   const stats = useMemo(() => calculateStreak(entries, habit), [entries, habit]);
+
+  const entriesCountByMonth = useMemo(() => {
+    const counts: { [yearMonth: string]: number } = {};
+    for (const e of entries) {
+      if (e.status) {
+        const ym = e.date.substring(0, 7);
+        counts[ym] = (counts[ym] || 0) + 1;
+      }
+    }
+    return counts;
+  }, [entries]);
 
   // Calendar grid
   const monthStart = startOfMonth(currentMonth);
@@ -199,16 +213,27 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
           className={styles.monthBtn}
           onClick={() => setCurrentMonth(prev => subMonths(prev, 1))}
           aria-label="Previous month"
+          id="habit-detail-prev-month"
         >
           <ChevronLeft size={20} />
         </button>
-        <h2 className={styles.monthLabel}>
-          {format(currentMonth, 'MMMM yyyy')}
-        </h2>
+        <button
+          className={styles.monthSelectTrigger}
+          onClick={() => setShowMonthPicker(true)}
+          aria-label="Select month"
+          id="habit-detail-month-picker-btn"
+          title="Click to jump to any month"
+        >
+          <h2 className={styles.monthLabel}>
+            {format(currentMonth, 'MMMM yyyy')}
+          </h2>
+          <ChevronDown size={16} className={styles.monthSelectChevron} />
+        </button>
         <button
           className={styles.monthBtn}
           onClick={() => setCurrentMonth(prev => addMonths(prev, 1))}
           aria-label="Next month"
+          id="habit-detail-next-month"
         >
           <ChevronRight size={20} />
         </button>
@@ -450,6 +475,16 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
         <ShareHabitModal
           habit={habit}
           onClose={() => setShowShareModal(false)}
+        />
+      )}
+
+      {/* Exploded Month Picker Modal */}
+      {showMonthPicker && (
+        <MonthPickerModal
+          currentMonth={currentMonth}
+          onSelectMonth={setCurrentMonth}
+          onClose={() => setShowMonthPicker(false)}
+          entriesCountByMonth={entriesCountByMonth}
         />
       )}
     </div>
