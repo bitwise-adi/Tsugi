@@ -11,7 +11,6 @@ import {
   ChevronRight,
   CalendarDays,
   AlertCircle,
-  Clock,
 } from 'lucide-react';
 import { format, addDays, subDays, isToday, isTomorrow, isYesterday, parseISO } from 'date-fns';
 import styles from './page.module.css';
@@ -32,8 +31,6 @@ export default function TasksPage() {
     taskSummaryByDate,
     pastPendingCount,
     pastPendingDates,
-    upcomingPendingCount,
-    upcomingPendingDates,
   } = usePendingTasksSummary();
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -143,33 +140,6 @@ export default function TasksPage() {
               >
                 <span>{formatDateHeading(item.date)}</span>
                 <span className={styles.pastChipCount}>{item.pendingCount}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Today & Upcoming Pending Tasks Banner */}
-      {upcomingPendingCount > 0 && (
-        <div className={styles.upcomingPendingBanner}>
-          <div className={styles.pastPendingTop}>
-            <div className={styles.pastPendingTitleRow}>
-              <Clock size={16} className={styles.upcomingIcon} />
-              <span className={styles.pastPendingTitle}>
-                <strong>{upcomingPendingCount}</strong> pending task{upcomingPendingCount > 1 ? 's' : ''} for today & upcoming days
-              </span>
-            </div>
-          </div>
-          <div className={styles.pastPendingChips}>
-            {upcomingPendingDates.map(item => (
-              <button
-                key={item.date}
-                className={`${styles.upcomingDateChip} ${selectedDate === item.date ? styles.upcomingDateChipActive : ''}`}
-                onClick={() => setSelectedDate(item.date)}
-                id={`jump-upcoming-task-${item.date}`}
-              >
-                <span>{formatDateHeading(item.date)}</span>
-                <span className={styles.upcomingChipCount}>{item.pendingCount}</span>
               </button>
             ))}
           </div>
