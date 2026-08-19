@@ -16,7 +16,7 @@
   border: 1px solid var(--border-default);
   border-radius: var(--radius-2xl);
   padding: var(--space-5);
-  max-width: 24rem;
+  max-width: 22rem;
   width: 100%;
   box-shadow: var(--shadow-2xl);
   animation: modalScaleIn 250ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -144,14 +144,9 @@
 }
 
 .monthAbbr {
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   font-weight: var(--font-bold);
   color: var(--text-primary);
-}
-
-.monthFullName {
-  font-size: 10px;
-  color: var(--text-tertiary);
 }
 
 .todayBadge {
@@ -178,7 +173,6 @@
 }
 
 .monthSelected .monthAbbr,
-.monthSelected .monthFullName,
 .monthSelected .countBadge {
   color: #ffffff !important;
 }

@@ -18,12 +18,6 @@ interface MonthPickerModalProps {
   entriesCountByMonth?: { [yearMonth: string]: number };
 }
 
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April',
-  'May', 'June', 'July', 'August',
-  'September', 'October', 'November', 'December',
-];
-
 const MONTH_ABBRS = [
   'Jan', 'Feb', 'Mar', 'Apr',
   'May', 'Jun', 'Jul', 'Aug',
@@ -87,7 +81,7 @@ export default function MonthPickerModal({
 
         {/* 12-Month Exploded Grid */}
         <div className={styles.monthGrid}>
-          {MONTH_NAMES.map((name, index) => {
+          {MONTH_ABBRS.map((abbr, index) => {
             const dateForMonth = setMonth(setYear(new Date(), viewYear), index);
             const isSelected = isSameMonth(dateForMonth, currentMonth);
             const isCurrentRealMonth = isSameMonth(dateForMonth, today);
@@ -96,7 +90,7 @@ export default function MonthPickerModal({
 
             return (
               <button
-                key={name}
+                key={abbr}
                 className={`
                   ${styles.monthCard}
                   ${isSelected ? styles.monthSelected : ''}
@@ -106,10 +100,9 @@ export default function MonthPickerModal({
                 id={`month-picker-option-${index}`}
               >
                 <div className={styles.monthCardTop}>
-                  <span className={styles.monthAbbr}>{MONTH_ABBRS[index]}</span>
+                  <span className={styles.monthAbbr}>{abbr}</span>
                   {isCurrentRealMonth && <span className={styles.todayBadge}>Now</span>}
                 </div>
-                <span className={styles.monthFullName}>{name}</span>
                 {count !== undefined && count > 0 && (
                   <span className={styles.countBadge}>{count} logged</span>
                 )}
