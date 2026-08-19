@@ -25,60 +25,94 @@
   font-weight: var(--font-medium);
 }
 
-.heatmapScroll {
+/* Scroll container wrapper */
+.heatmapScrollWrapper {
+  position: relative;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: var(--space-2);
   scrollbar-width: thin;
 }
 
-/* Top row: spacer + month labels aligned with week columns */
-.topRow {
+.heatmapGrid {
   display: flex;
-  margin-bottom: 2px;
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-2);
+  min-width: max-content;
 }
 
-.dayLabelSpacer {
-  width: 24px;
+/* Pinned Sticky Left Day Labels */
+.dayLabelsCol {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background: var(--bg-card);
+  display: flex;
+  flex-direction: column;
+  padding-right: var(--space-2);
+  padding-left: var(--space-1);
+  margin-right: var(--space-2);
+  border-right: 1px solid var(--border-subtle);
   flex-shrink: 0;
+  box-shadow: 2px 0 6px -2px rgba(0, 0, 0, 0.15);
 }
 
-.monthLabels {
-  display: flex;
-  gap: 3px;
+.dayLabelsHeaderSpacer {
+  height: 20px;
+  margin-bottom: 4px;
 }
 
-.monthCell {
-  width: 14px;
-  font-size: 10px;
-  color: var(--text-tertiary);
-  text-align: left;
-  white-space: nowrap;
-  overflow: visible;
-}
-
-/* Grid body: day labels + week columns side by side */
-.gridBody {
-  display: flex;
-}
-
-.dayLabels {
+.dayLabelList {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  width: 24px;
-  flex-shrink: 0;
 }
 
 .dayLabel {
   height: 14px;
-  font-size: 10px;
+  font-size: 9px;
+  font-weight: var(--font-semibold);
   color: var(--text-tertiary);
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   line-height: 1;
+  letter-spacing: -0.02em;
 }
 
+/* Scrollable Container */
+.columnsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Month Headers */
+.monthHeadersRow {
+  display: flex;
+  height: 20px;
+  align-items: center;
+}
+
+.monthHeaderGroup {
+  display: flex;
+  align-items: center;
+  padding-left: 2px;
+  box-sizing: border-box;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.monthHeaderText {
+  font-size: 10px;
+  font-weight: var(--font-bold);
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* Weeks Grid */
 .weeksRow {
   display: flex;
   gap: 3px;
@@ -90,18 +124,25 @@
   gap: 3px;
 }
 
+.newMonthCol {
+  border-left: 1px dashed var(--border-subtle);
+  padding-left: 2px;
+}
+
 /* Cells */
 .cell {
   width: 14px;
   height: 14px;
   border-radius: 3px;
-  transition: transform 120ms ease;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+  cursor: pointer;
 }
 
 .cell:hover {
-  transform: scale(1.5);
-  z-index: 2;
+  transform: scale(1.4);
+  z-index: 5;
   position: relative;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
 }
 
 .cellBlank {
@@ -110,7 +151,8 @@
 }
 
 .cellEmpty {
-  background: var(--border-subtle);
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
 }
 
 .cellOffDay {
@@ -121,38 +163,38 @@
 
 .cellDone {
   background: var(--color-done);
-  opacity: 0.9;
+  opacity: 0.95;
 }
 
 .cellMissed {
   background: var(--color-missed);
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 .cellExcused {
   background: var(--color-excused);
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 /* Legend */
 .legend {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-4);
   margin-top: var(--space-3);
   flex-wrap: wrap;
 }
 
-.legendLabel {
-  font-size: 10px;
-  color: var(--text-tertiary);
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
 }
 
-.legendDivider {
-  width: 1px;
-  height: 10px;
-  background: var(--border-default);
-  margin: 0 2px;
+.legendLabel {
+  font-size: 11px;
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
 }
 
 @keyframes fadeInUp {
