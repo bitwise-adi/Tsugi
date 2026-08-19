@@ -56,6 +56,7 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
   const { user } = useAuth();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<HabitStatus | null>(null);
   const [noteText, setNoteText] = useState('');
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -71,19 +72,27 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
 
   const handleDateClick = (dateStr: string, dayDate: Date) => {
     if (isFuture(dayDate) && !isToday(dayDate)) return;
-    setSelectedDate(selectedDate === dateStr ? null : dateStr);
+    if (selectedDate === dateStr) {
+      setSelectedDate(null);
+      setSelectedStatus(null);
+      return;
+    }
+    setSelectedDate(dateStr);
     const existing = getEntryForDate(dateStr);
+    setSelectedStatus(existing?.status || null);
     setNoteText(existing?.note || '');
     setShowNoteInput(!!existing?.note);
   };
 
   const handleSetStatus = async (status: HabitStatus) => {
     if (!selectedDate) return;
-    const currentStatus = selectedEntry?.status;
-    if (currentStatus === status) {
-      // Toggle off / Unclick: remove status selection
+    if (selectedStatus === status) {
+      // Toggle off / Unclick: remove status selection immediately in UI
+      setSelectedStatus(null);
       await deleteEntry(selectedDate);
     } else {
+      // Select new status immediately in UI
+      setSelectedStatus(status);
       await setEntry(selectedDate, status, noteText || undefined);
     }
   };
@@ -92,6 +101,7 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
     if (!selectedDate) return;
     await updateNote(selectedDate, noteText);
     setSelectedDate(null);
+    setSelectedStatus(null);
   };
 
   // "Done" button handler — saves note if present, then closes popup
@@ -102,6 +112,7 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
       await updateNote(selectedDate, noteText);
     }
     setSelectedDate(null);
+    setSelectedStatus(null);
   };
 
   const selectedEntry = selectedDate ? getEntryForDate(selectedDate) : null;
@@ -340,7 +351,7 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
             <div className={styles.statusPicker}>
               {STATUS_OPTIONS.map(opt => {
                 const Icon = opt.icon;
-                const isActive = selectedEntry?.status === opt.value;
+                const isActive = selectedStatus === opt.value;
                 return (
                   <button
                     key={opt.value}
