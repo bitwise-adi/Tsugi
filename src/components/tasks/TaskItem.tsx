@@ -10,7 +10,10 @@ import {
   AlertCircle,
   Minus,
   ArrowDown,
+  Calendar,
 } from 'lucide-react';
+import { format } from 'date-fns';
+import { getTodayString } from '@/hooks/useTasks';
 import type { Task, TaskPriority } from '@/types';
 import styles from './TaskItem.module.css';
 
@@ -70,6 +73,13 @@ export default function TaskItem({ task, onToggle, onDelete, onUpdate }: TaskIte
                 <span className={styles.timeBadge}>
                   <Clock size={12} />
                   {task.time}
+                </span>
+              )}
+              {/* Due Date Badge */}
+              {task.dueDate && (
+                <span className={`${styles.dueDateBadge} ${task.dueDate < getTodayString() && !task.completed ? styles.overdueBadge : ''}`}>
+                  <Calendar size={11} />
+                  Due {format(new Date(task.dueDate + 'T00:00:00'), 'MMM d')}
                 </span>
               )}
             </div>

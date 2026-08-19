@@ -38,7 +38,8 @@ export interface Task {
   id: string;
   title: string;
   description?: string;
-  date: string;                 // 'YYYY-MM-DD'
+  date: string;                 // 'YYYY-MM-DD' — date the task belongs to
+  dueDate?: string;             // 'YYYY-MM-DD' — optional target / due date
   time?: string;                // 'HH:mm' for reminder
   completed: boolean;
   priority: TaskPriority;

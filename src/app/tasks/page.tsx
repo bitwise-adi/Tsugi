@@ -11,6 +11,7 @@ import {
   ChevronRight,
   CalendarDays,
   AlertCircle,
+  Clock,
 } from 'lucide-react';
 import { format, addDays, subDays, isToday, isTomorrow, isYesterday, parseISO } from 'date-fns';
 import styles from './page.module.css';
@@ -27,7 +28,13 @@ export default function TasksPage() {
   const [selectedDate, setSelectedDate] = useState(getTodayString());
   const { tasks, loading, addTask, toggleComplete, deleteTask, updateTask } =
     useTasks(selectedDate);
-  const { taskSummaryByDate, pastPendingCount, pastPendingDates } = usePendingTasksSummary();
+  const {
+    taskSummaryByDate,
+    pastPendingCount,
+    pastPendingDates,
+    upcomingPendingCount,
+    upcomingPendingDates,
+  } = usePendingTasksSummary();
   const [showAddModal, setShowAddModal] = useState(false);
 
   const activeDayRef = useRef<HTMLButtonElement>(null);
@@ -103,9 +110,15 @@ export default function TasksPage() {
         <p className={styles.subtitle}>
           {totalCount === 0
             ? 'No tasks for this day'
-            : isPastDate && pendingCount > 0
-            ? `${pendingCount} pending task${pendingCount > 1 ? 's' : ''} from past day (${completedCount}/${totalCount} completed)`
-            : `${completedCount}/${totalCount} completed`}
+            : isCurrentlyToday
+            ? pendingCount === 0
+              ? `All ${totalCount} task${totalCount === 1 ? '' : 's'} completed today! 🎉`
+              : `${completedCount}/${totalCount} completed • ${pendingCount} remaining today`
+            : isPastDate
+            ? pendingCount > 0
+              ? `${pendingCount} pending task${pendingCount > 1 ? 's' : ''} from past day (${completedCount}/${totalCount} completed)`
+              : `All ${totalCount} tasks completed (${completedCount}/${totalCount})`
+            : `${completedCount}/${totalCount} completed • ${pendingCount} pending`}
         </p>
       </header>
 
@@ -130,6 +143,33 @@ export default function TasksPage() {
               >
                 <span>{formatDateHeading(item.date)}</span>
                 <span className={styles.pastChipCount}>{item.pendingCount}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Today & Upcoming Pending Tasks Banner */}
+      {upcomingPendingCount > 0 && (
+        <div className={styles.upcomingPendingBanner}>
+          <div className={styles.pastPendingTop}>
+            <div className={styles.pastPendingTitleRow}>
+              <Clock size={16} className={styles.upcomingIcon} />
+              <span className={styles.pastPendingTitle}>
+                <strong>{upcomingPendingCount}</strong> pending task{upcomingPendingCount > 1 ? 's' : ''} for today & upcoming days
+              </span>
+            </div>
+          </div>
+          <div className={styles.pastPendingChips}>
+            {upcomingPendingDates.map(item => (
+              <button
+                key={item.date}
+                className={`${styles.upcomingDateChip} ${selectedDate === item.date ? styles.upcomingDateChipActive : ''}`}
+                onClick={() => setSelectedDate(item.date)}
+                id={`jump-upcoming-task-${item.date}`}
+              >
+                <span>{formatDateHeading(item.date)}</span>
+                <span className={styles.upcomingChipCount}>{item.pendingCount}</span>
               </button>
             ))}
           </div>

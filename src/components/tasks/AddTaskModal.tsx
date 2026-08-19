@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Calendar, Clock, Flag } from 'lucide-react';
+import { X, Calendar, Clock, Flag, Target } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import type { Task, TaskPriority } from '@/types';
 import styles from './AddTaskModal.module.css';
@@ -29,6 +29,7 @@ export default function AddTaskModal({ onClose, onAdd, initialDate }: AddTaskMod
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(initialDate || format(new Date(), 'yyyy-MM-dd'));
+  const [dueDate, setDueDate] = useState('');
   const [time, setTime] = useState('');
   const [priority, setPriority] = useState<TaskPriority>('medium');
   const [reminderEnabled, setReminderEnabled] = useState(false);
@@ -44,6 +45,7 @@ export default function AddTaskModal({ onClose, onAdd, initialDate }: AddTaskMod
         title: title.trim(),
         description: description.trim() || undefined,
         date,
+        dueDate: dueDate || undefined,
         time: time || undefined,
         completed: false,
         priority,
@@ -93,11 +95,11 @@ export default function AddTaskModal({ onClose, onAdd, initialDate }: AddTaskMod
             />
           </div>
 
-          {/* Date */}
+          {/* Scheduled Date */}
           <div className={styles.field}>
             <label className={styles.label}>
               <Calendar size={14} />
-              Date
+              Scheduled Date
             </label>
             <div className={styles.quickDates}>
               {QUICK_DATES.map(qd => {
@@ -120,6 +122,47 @@ export default function AddTaskModal({ onClose, onAdd, initialDate }: AddTaskMod
               value={date}
               onChange={e => setDate(e.target.value)}
               id="task-date-input"
+            />
+          </div>
+
+          {/* Due Date (Optional) */}
+          <div className={styles.field}>
+            <div className={styles.labelRow}>
+              <label className={styles.label} htmlFor="task-due-date">
+                <Target size={14} />
+                Due Date (optional)
+              </label>
+              {dueDate && (
+                <button
+                  type="button"
+                  className={styles.clearTimeBtn}
+                  onClick={() => setDueDate('')}
+                >
+                  Clear due date
+                </button>
+              )}
+            </div>
+            <div className={styles.quickDates}>
+              {QUICK_DATES.map(qd => {
+                const qdVal = qd.getDate();
+                return (
+                  <button
+                    key={`due-${qd.label}`}
+                    type="button"
+                    className={`${styles.quickDateBtn} ${dueDate === qdVal ? styles.quickDateActive : ''}`}
+                    onClick={() => setDueDate(qdVal)}
+                  >
+                    {qd.label}
+                  </button>
+                );
+              })}
+            </div>
+            <input
+              type="date"
+              className={styles.dateInput}
+              value={dueDate}
+              onChange={e => setDueDate(e.target.value)}
+              id="task-due-date"
             />
           </div>
 
