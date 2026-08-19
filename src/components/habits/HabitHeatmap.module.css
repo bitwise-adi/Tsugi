@@ -3,19 +3,33 @@
   animation: fadeInUp 300ms ease-out;
 }
 
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+  gap: var(--space-2);
+}
+
 .label {
   font-size: var(--text-sm);
   font-weight: var(--font-semibold);
   color: var(--text-secondary);
-  margin-bottom: var(--space-3);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.scrollHint {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-weight: var(--font-medium);
 }
 
 .heatmapScroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: var(--space-1);
+  padding-bottom: var(--space-2);
+  scrollbar-width: thin;
 }
 
 /* Top row: spacer + month labels aligned with week columns */

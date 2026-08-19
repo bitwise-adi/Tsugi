@@ -6,6 +6,7 @@ import {
   saveHabitWithOutbox,
   deleteHabitWithOutbox,
   saveHabitEntryWithOutbox,
+  deleteHabitEntryWithOutbox,
 } from '@/lib/outbox';
 import { isHabitScheduledOnDate } from '@/lib/schedule';
 import type { Habit, HabitEntry } from '@/types';
@@ -222,11 +223,23 @@ export function useHabitEntries(habitId: string) {
     }
   }, [habitId]);
 
+  const deleteEntry = useCallback(async (date: string) => {
+    const existing = await db.habitEntries
+      .where('[habitId+date]')
+      .equals([habitId, date])
+      .first();
+
+    if (existing) {
+      await deleteHabitEntryWithOutbox(existing.id);
+      setEntries(prev => prev.filter(e => e.id !== existing.id));
+    }
+  }, [habitId]);
+
   const getEntryForDate = useCallback((date: string) => {
     return entries.find(e => e.date === date);
   }, [entries]);
 
-  return { entries, loading, setEntry, updateNote, getEntryForDate, refreshEntries: loadEntries };
+  return { entries, loading, setEntry, deleteEntry, updateNote, getEntryForDate, refreshEntries: loadEntries };
 }
 
 // --- Streak Calculation ---

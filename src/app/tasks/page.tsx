@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useTasks, usePendingTasksSummary, getTodayString } from '@/hooks/useTasks';
 import TaskItem from '@/components/tasks/TaskItem';
 import AddTaskModal from '@/components/tasks/AddTaskModal';
@@ -30,6 +30,8 @@ export default function TasksPage() {
   const { taskSummaryByDate, pastPendingCount, pastPendingDates } = usePendingTasksSummary();
   const [showAddModal, setShowAddModal] = useState(false);
 
+  const activeDayRef = useRef<HTMLButtonElement>(null);
+
   const completedCount = useMemo(
     () => tasks.filter((t) => t.completed).length,
     [tasks]
@@ -46,11 +48,12 @@ export default function TasksPage() {
   const isCurrentlyToday = isToday(parseISO(selectedDate));
   const isPastDate = selectedDate < getTodayString();
 
-  // 7-day strip around selectedDate
+  // Scrollable timeline strip: 36 days (-21 days past to +14 days future)
   const dayStrip = useMemo(() => {
-    const center = parseISO(selectedDate);
-    return [-3, -2, -1, 0, 1, 2, 3].map(offset => {
-      const d = offset >= 0 ? addDays(center, offset) : subDays(center, Math.abs(offset));
+    const todayObj = parseISO(getTodayString());
+    const offsets = Array.from({ length: 36 }, (_, i) => i - 21);
+    return offsets.map(offset => {
+      const d = offset >= 0 ? addDays(todayObj, offset) : subDays(todayObj, Math.abs(offset));
       const dateStr = format(d, 'yyyy-MM-dd');
       const isSelected = dateStr === selectedDate;
       const today = isToday(d);
@@ -69,6 +72,13 @@ export default function TasksPage() {
       };
     });
   }, [selectedDate, taskSummaryByDate]);
+
+  // Center the active selected day in view
+  useEffect(() => {
+    if (activeDayRef.current) {
+      activeDayRef.current.scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' });
+    }
+  }, [selectedDate]);
 
   return (
     <div className={styles.container}>
@@ -152,34 +162,37 @@ export default function TasksPage() {
         </button>
       </div>
 
-      {/* 7-Day Quick Strip */}
-      <div className={styles.dayStrip}>
-        {dayStrip.map(day => (
-          <button
-            key={day.dateStr}
-            className={`
-              ${styles.dayStripPill}
-              ${day.isSelected ? styles.dayStripActive : ''}
-              ${day.isToday ? styles.dayStripToday : ''}
-            `}
-            onClick={() => setSelectedDate(day.dateStr)}
-            id={`day-strip-${day.dateStr}`}
-          >
-            <span className={styles.dayStripName}>{day.dayName}</span>
-            <span className={styles.dayStripNum}>{day.dayNumber}</span>
-            <div className={styles.dayStripIndicator}>
-              {day.total > 0 && day.pending === 0 && (
-                <span className={styles.dotDone} title="All tasks completed" />
-              )}
-              {day.total > 0 && day.pending > 0 && (
-                <span className={styles.dotPending} title={`${day.pending} pending task${day.pending > 1 ? 's' : ''}`}>
-                  {day.pending > 9 ? '9+' : day.pending}
-                </span>
-              )}
-              {day.total === 0 && <span className={styles.dotEmpty} />}
-            </div>
-          </button>
-        ))}
+      {/* Scrollable Day Strip */}
+      <div className={styles.dayStripContainer}>
+        <div className={styles.dayStrip}>
+          {dayStrip.map(day => (
+            <button
+              key={day.dateStr}
+              ref={day.isSelected ? activeDayRef : null}
+              className={`
+                ${styles.dayStripPill}
+                ${day.isSelected ? styles.dayStripActive : ''}
+                ${day.isToday ? styles.dayStripToday : ''}
+              `}
+              onClick={() => setSelectedDate(day.dateStr)}
+              id={`day-strip-${day.dateStr}`}
+            >
+              <span className={styles.dayStripName}>{day.dayName}</span>
+              <span className={styles.dayStripNum}>{day.dayNumber}</span>
+              <div className={styles.dayStripIndicator}>
+                {day.total > 0 && day.pending === 0 && (
+                  <span className={styles.dotDone} title="All tasks completed" />
+                )}
+                {day.total > 0 && day.pending > 0 && (
+                  <span className={styles.dotPending} title={`${day.pending} pending task${day.pending > 1 ? 's' : ''}`}>
+                    {day.pending > 9 ? '9+' : day.pending}
+                  </span>
+                )}
+                {day.total === 0 && <span className={styles.dotEmpty} />}
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Task List */}

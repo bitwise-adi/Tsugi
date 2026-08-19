@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
-import { format, subDays, isAfter } from 'date-fns';
+import { useMemo, useRef, useEffect } from 'react';
+import { format, subDays, isAfter, endOfMonth, isSameMonth } from 'date-fns';
 import { isHabitScheduledOnDate } from '@/lib/schedule';
 import type { Habit, HabitEntry } from '@/types';
 import styles from './HabitHeatmap.module.css';
@@ -10,21 +10,36 @@ interface HabitHeatmapProps {
   entries: HabitEntry[];
   color: string;
   habit?: Habit;
+  selectedMonth?: Date;
 }
 
-// Show ~13 weeks (91 days = ~3 months) — fits well on mobile
-const TOTAL_DAYS = 91;
+// 52 weeks = 364 days (~1 full year)
+const FULL_YEAR_DAYS = 364;
 
-export default function HabitHeatmap({ entries, color, habit }: HabitHeatmapProps) {
-  const { weeks, monthLabels } = useMemo(() => {
+export default function HabitHeatmap({ entries, color, habit, selectedMonth }: HabitHeatmapProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const { weeks, monthLabels, anchorDate } = useMemo(() => {
     const today = new Date();
     today.setHours(23, 59, 59, 999);
+
+    let anchor: Date;
+    if (selectedMonth) {
+      if (isSameMonth(selectedMonth, today)) {
+        anchor = today;
+      } else {
+        anchor = endOfMonth(selectedMonth);
+        anchor.setHours(23, 59, 59, 999);
+      }
+    } else {
+      anchor = today;
+    }
 
     const entryMap = new Map<string, HabitEntry['status']>();
     entries.forEach(e => entryMap.set(e.date, e.status));
 
-    // Start from TOTAL_DAYS ago, aligned to Sunday
-    const rawStart = subDays(today, TOTAL_DAYS - 1);
+    // Start from 52 weeks (364 days) ago, aligned to Sunday
+    const rawStart = subDays(anchor, FULL_YEAR_DAYS);
     const startOffset = rawStart.getDay(); // 0=Sun
     const startDate = subDays(rawStart, startOffset); // align to Sunday
 
@@ -43,7 +58,7 @@ export default function HabitHeatmap({ entries, color, habit }: HabitHeatmapProp
 
     let d = new Date(startDate);
     let colIndex = 0;
-    while (!isAfter(d, today) || d.getDay() !== 0) {
+    while (!isAfter(d, anchor) || d.getDay() !== 0) {
       // Start a new week column on Sunday
       if (d.getDay() === 0) {
         weekCols.push({ cells: [] });
@@ -73,20 +88,31 @@ export default function HabitHeatmap({ entries, color, habit }: HabitHeatmapProp
       d = new Date(d);
       d.setDate(d.getDate() + 1);
 
-      // Safety: don't loop forever
-      if (colIndex > 20) break;
+      // Safety limit: max 55 columns
+      if (colIndex > 55) break;
     }
 
-    return { weeks: weekCols, monthLabels: months };
-  }, [entries, habit]);
+    return { weeks: weekCols, monthLabels: months, anchorDate: anchor };
+  }, [entries, habit, selectedMonth]);
+
+  // Auto-scroll to the end (most recent month/weeks) on mount and on month change
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+    }
+  }, [selectedMonth, weeks]);
 
   const isScheduleSpecific = habit && habit.frequency !== 'daily';
+  const headingText = `Activity — Through ${format(anchorDate, 'MMM yyyy')}`;
 
   return (
     <div className={styles.container}>
-      <div className={styles.label}>Activity — Last 3 Months</div>
+      <div className={styles.headerRow}>
+        <div className={styles.label}>{headingText}</div>
+        <span className={styles.scrollHint}>← Scroll for past year</span>
+      </div>
 
-      <div className={styles.heatmapScroll}>
+      <div className={styles.heatmapScroll} ref={scrollRef}>
         {/* Month labels row */}
         <div className={styles.topRow}>
           <div className={styles.dayLabelSpacer} />

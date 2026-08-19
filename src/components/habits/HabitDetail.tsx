@@ -52,7 +52,7 @@ const STATUS_OPTIONS: { value: HabitStatus; label: string; icon: typeof Check; c
 ];
 
 export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProps) {
-  const { entries, setEntry, updateNote, getEntryForDate } = useHabitEntries(habit.id);
+  const { entries, setEntry, deleteEntry, updateNote, getEntryForDate } = useHabitEntries(habit.id);
   const { user } = useAuth();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -79,7 +79,13 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
 
   const handleSetStatus = async (status: HabitStatus) => {
     if (!selectedDate) return;
-    await setEntry(selectedDate, status, noteText || undefined);
+    const currentStatus = selectedEntry?.status;
+    if (currentStatus === status) {
+      // Toggle off / Unclick: remove status selection
+      await deleteEntry(selectedDate);
+    } else {
+      await setEntry(selectedDate, status, noteText || undefined);
+    }
   };
 
   const handleSaveNote = async () => {
@@ -172,7 +178,7 @@ export default function HabitDetail({ habit, onBack, onDelete }: HabitDetailProp
 
       {/* Analytics: Heatmap + Weekly Chart */}
       <div className={styles.analyticsSection}>
-        <HabitHeatmap entries={entries} color={habit.color} habit={habit} />
+        <HabitHeatmap entries={entries} color={habit.color} habit={habit} selectedMonth={currentMonth} />
         <HabitChart entries={entries} color={habit.color} habit={habit} />
       </div>
 
