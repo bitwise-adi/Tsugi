@@ -31,10 +31,19 @@ export async function getPendingOutboxCount(): Promise<number> {
   return await db.syncOutbox.count();
 }
 
-// Bootstrap local IndexedDB data into syncOutbox if local records exist but outbox is empty
-export async function bootstrapLocalDataToOutbox(): Promise<void> {
+// Bootstrap local IndexedDB data into syncOutbox ONCE when user first signs in with local data
+export async function bootstrapLocalDataToOutbox(userId: string): Promise<void> {
+  if (typeof window === 'undefined') return;
+  const bootstrapKey = `tsugi_bootstrapped_${userId}`;
+  if (localStorage.getItem(bootstrapKey) === 'true') {
+    return;
+  }
+
   const outboxCount = await db.syncOutbox.count();
-  if (outboxCount > 0) return;
+  if (outboxCount > 0) {
+    localStorage.setItem(bootstrapKey, 'true');
+    return;
+  }
 
   const now = new Date().toISOString();
   const [habits, entries, tasks] = await Promise.all([
@@ -87,6 +96,8 @@ export async function bootstrapLocalDataToOutbox(): Promise<void> {
   if (items.length > 0) {
     await db.syncOutbox.bulkAdd(items);
   }
+
+  localStorage.setItem(bootstrapKey, 'true');
 }
 
 // Flush pending mutations from IndexedDB outbox to Firestore
@@ -318,17 +329,16 @@ export async function pullCloudToLocal(userId: string): Promise<void> {
 
 // Full sync: flush local outbox first, then pull remote updates
 export async function syncData(userId: string): Promise<void> {
-  // Ensure existing local data is enqueued if this is first sync
-  await bootstrapLocalDataToOutbox();
+  // Ensure existing local data is enqueued once on initial login
+  await bootstrapLocalDataToOutbox(userId);
 
   // 1. Flush local outbox mutations to Firestore
   await flushOutbox(userId);
 
-  // 2. Pull remote changes to local IndexedDB
+  // 2. Pull remote changes to local IndexedDB (dispatches tsugi:data-synced if local DB changed)
   await pullCloudToLocal(userId);
 
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('tsugi:data-synced'));
     window.dispatchEvent(new CustomEvent('tsugi:outbox-changed'));
   }
 }

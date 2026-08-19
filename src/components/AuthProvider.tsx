@@ -38,15 +38,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const count = await getPendingOutboxCount();
       setPendingOutboxCount(count);
-      if (count > 0 && !syncingRef.current) {
-        setSyncStatus('pending');
-      } else if (count === 0 && !syncingRef.current && syncStatus !== 'error') {
-        setSyncStatus('synced');
-      }
+      setSyncStatus(prev => {
+        if (count > 0 && !syncingRef.current) return 'pending';
+        if (count === 0 && !syncingRef.current && prev !== 'error') return 'synced';
+        return prev;
+      });
     } catch {
       // Ignore count errors
     }
-  }, [syncStatus]);
+  }, []);
 
   const runSync = useCallback(async (isFullSync = false) => {
     const currentUser = userRef.current;
@@ -75,11 +75,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       syncingRef.current = false;
       const count = await getPendingOutboxCount();
       setPendingOutboxCount(count);
-      if (count > 0 && syncStatus !== 'error') {
-        setSyncStatus('pending');
-      }
+      setSyncStatus(prev => {
+        if (count > 0 && prev !== 'error') return 'pending';
+        if (count === 0 && prev !== 'error') return 'synced';
+        return prev;
+      });
     }
-  }, [syncStatus]);
+  }, []);
 
   const triggerSync = useCallback(async () => {
     await runSync(true);
@@ -90,9 +92,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     getPendingOutboxCount().then((count) => {
       if (!active) return;
       setPendingOutboxCount(count);
-      if (count > 0 && !syncingRef.current) {
-        setSyncStatus('pending');
-      }
+      setSyncStatus(prev => {
+        if (count > 0 && !syncingRef.current) return 'pending';
+        return prev;
+      });
     });
 
     const unsubscribe = onAuthChange((firebaseUser) => {

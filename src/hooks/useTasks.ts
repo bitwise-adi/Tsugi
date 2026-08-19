@@ -79,7 +79,15 @@ export function useTasks(dateFilter?: string) {
           return a.createdAt.localeCompare(b.createdAt);
         });
         if (!cancelled) {
-          setTasks(result);
+          setTasks(prev => {
+            if (
+              prev.length === result.length &&
+              prev.every((t, i) => t.id === result[i].id && t.updatedAt === result[i].updatedAt && t.completed === result[i].completed)
+            ) {
+              return prev;
+            }
+            return result;
+          });
           setLoading(false);
         }
         result.forEach(t => {

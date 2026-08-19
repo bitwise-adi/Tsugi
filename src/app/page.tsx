@@ -30,13 +30,23 @@ export default function HabitsPage() {
   const today = getTodayString();
   useEffect(() => {
     const loadTodayEntries = () => {
-      db.habitEntries.where('date').equals(today).toArray().then(setTodayEntries);
+      db.habitEntries.where('date').equals(today).toArray().then(newEntries => {
+        setTodayEntries(prev => {
+          if (
+            prev.length === newEntries.length &&
+            prev.every((e, i) => e.id === newEntries[i].id && e.status === newEntries[i].status && e.updatedAt === newEntries[i].updatedAt)
+          ) {
+            return prev;
+          }
+          return newEntries;
+        });
+      });
     };
     loadTodayEntries();
 
     window.addEventListener('tsugi:data-synced', loadTodayEntries);
     return () => window.removeEventListener('tsugi:data-synced', loadTodayEntries);
-  }, [habits, today]);
+  }, [today]);
 
   // --- URL Hash Navigation for HabitDetail ---
   // When we enter a habit detail, push a hash so browser back works

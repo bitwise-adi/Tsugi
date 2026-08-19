@@ -51,7 +51,17 @@ export function useHabits() {
         .reverse()
         .toArray()
         .then((allHabits) => {
-          if (!cancelled) setHabits(allHabits);
+          if (!cancelled) {
+            setHabits(prev => {
+              if (
+                prev.length === allHabits.length &&
+                prev.every((h, i) => h.id === allHabits[i].id && h.updatedAt === allHabits[i].updatedAt)
+              ) {
+                return prev;
+              }
+              return allHabits;
+            });
+          }
         });
     };
 
@@ -138,7 +148,17 @@ export function useHabitEntries(habitId: string) {
         .equals(habitId)
         .toArray()
         .then((allEntries) => {
-          if (!cancelled) setEntries(allEntries);
+          if (!cancelled) {
+            setEntries(prev => {
+              if (
+                prev.length === allEntries.length &&
+                prev.every((e, i) => e.id === allEntries[i].id && e.status === allEntries[i].status && e.updatedAt === allEntries[i].updatedAt)
+              ) {
+                return prev;
+              }
+              return allEntries;
+            });
+          }
         });
     };
 

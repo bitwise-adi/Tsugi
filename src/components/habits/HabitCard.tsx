@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { db } from '@/lib/db';
 import { calculateStreak } from '@/hooks/useHabits';
 import { getFrequencyLabel, isHabitScheduledOnDate } from '@/lib/schedule';
@@ -15,7 +15,6 @@ interface HabitCardProps {
 
 export default function HabitCard({ habit, onClick }: HabitCardProps) {
   const [entries, setEntries] = useState<HabitEntry[]>([]);
-  const [stats, setStats] = useState({ current: 0, longest: 0, total: 0, rate: 0 });
 
   useEffect(() => {
     const load = async () => {
@@ -23,8 +22,15 @@ export default function HabitCard({ habit, onClick }: HabitCardProps) {
         .where('habitId')
         .equals(habit.id)
         .toArray();
-      setEntries(allEntries);
-      setStats(calculateStreak(allEntries, habit));
+      setEntries(prev => {
+        if (
+          prev.length === allEntries.length &&
+          prev.every((e, i) => e.id === allEntries[i].id && e.status === allEntries[i].status && e.updatedAt === allEntries[i].updatedAt)
+        ) {
+          return prev;
+        }
+        return allEntries;
+      });
     };
     load();
 
@@ -33,7 +39,9 @@ export default function HabitCard({ habit, onClick }: HabitCardProps) {
     };
     window.addEventListener('tsugi:data-synced', handleSynced);
     return () => window.removeEventListener('tsugi:data-synced', handleSynced);
-  }, [habit]);
+  }, [habit.id]);
+
+  const stats = useMemo(() => calculateStreak(entries, habit), [entries, habit]);
 
   // Get last 7 days status for mini preview
   const last7Days = Array.from({ length: 7 }, (_, i) => {
