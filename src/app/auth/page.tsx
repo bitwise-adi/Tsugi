@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
-import { signInWithGoogle, signInWithEmail, signUpWithEmail } from '@/lib/auth';
+import { signInWithGoogle, signInWithEmail, signUpWithEmail, checkRedirectResult } from '@/lib/auth';
 import { LogIn, Mail, Globe } from 'lucide-react';
 import styles from './page.module.css';
 
@@ -13,6 +13,13 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Check if returning from a Google redirect sign-in flow
+  useEffect(() => {
+    checkRedirectResult().catch(err => {
+      console.error('Redirect sign-in check failed:', err);
+    });
+  }, []);
 
   // If already logged in, show a simple redirect message
   if (user) {
@@ -34,7 +41,13 @@ export default function AuthPage() {
     try {
       await signInWithGoogle();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Google sign-in failed');
+      const msg = err instanceof Error ? err.message : 'Google sign-in failed';
+      // Suppress benign user cancellation
+      if (msg.includes('popup-closed-by-user') || msg.includes('cancelled-popup-request')) {
+        setError('');
+      } else {
+        setError(msg.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '').trim());
+      }
     } finally {
       setLoading(false);
     }
@@ -54,7 +67,6 @@ export default function AuthPage() {
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Authentication failed';
-      // Clean up Firebase error messages
       setError(msg.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '').trim());
     } finally {
       setLoading(false);
